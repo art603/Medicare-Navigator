@@ -3,572 +3,412 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medicare Strategic Dashboard 2026</title>
+    <title>Medicare Navigator & Cloud Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            background-color: #F8FAFC;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: #1E293B;
-            scroll-behavior: smooth;
-        }
-        .chart-container {
-            position: relative;
-            width: 100%;
-            max-width: 650px;
-            margin: 0 auto;
-            height: 350px;
-        }
-        .projection-container {
-            position: relative;
-            width: 100%;
-            max-width: 850px;
-            margin: 0 auto;
-            height: 400px;
-        }
-        .card {
-            background-color: #ffffff;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            padding: 1.5rem;
-            height: 100%;
-            border: 1px solid #E2E8F0;
-        }
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #3B82F6;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    <!-- Firebase Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        @media print {
-            nav, footer, .no-print, button, input, textarea, .agent-notice, .data-actions {
-                display: none !important;
+        // Global Firebase Configuration
+        const firebaseConfig = JSON.parse(__firebase_config);
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'medicare-navigator-603';
+
+        // Trigger anonymous sign-in immediately to handle permissions
+        const initAuth = async () => {
+            try {
+                await signInAnonymously(auth);
+                console.log("Authenticated successfully");
+            } catch (error) {
+                console.error("Authentication failed:", error);
             }
-            body { background-color: white !important; }
-            main { width: 100% !important; margin: 0 !important; padding: 0 !important; }
-            section { page-break-inside: avoid; margin-bottom: 3rem !important; }
-            .card { box-shadow: none !important; border: 1px solid #CBD5E1 !important; }
-            header { background-color: #1E3A8A !important; color: white !important; -webkit-print-color-adjust: exact; padding: 20px !important; }
-        }
+        };
+        initAuth();
+
+        window.fb = { auth, db, appId, addDoc, collection, onSnapshot, query, serverTimestamp, signInAnonymously };
+    </script>
+    <style>
+        body { background-color: #F8FAFC; font-family: 'Segoe UI', Roboto, sans-serif; color: #1E293B; overflow-x: hidden; }
+        #loginGate { position: fixed; inset: 0; background: #1E3A8A; z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .chart-container { position: relative; width: 100%; max-width: 650px; margin: 0 auto; height: 320px; }
+        .card { background-color: #ffffff; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 1.5rem; border: 1px solid #E2E8F0; }
+        .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3B82F6; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @media print { .no-print, #loginGate { display: none !important; } }
     </style>
 </head>
 <body class="antialiased">
 
-<nav class="sticky top-0 z-50 bg-white shadow-md border-b border-gray-200 no-print">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16 items-center">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl font-bold text-blue-900">&#10010;</span>
-                <span class="font-bold text-lg text-gray-900">Medicare<span class="text-blue-600">Map</span></span>
-            </div>
-            <div class="flex space-x-2 sm:space-x-4 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-                <button onclick="exportData()" class="text-teal-600 hover:text-teal-800 p-2">Save Record</button>
-                <button onclick="document.getElementById('importFile').click()" class="text-blue-600 hover:text-blue-800 p-2">Upload Record</button>
-                <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)">
-                <div class="w-px h-6 bg-gray-200 self-center"></div>
-                <button onclick="clearAllData()" class="text-red-500 hover:text-red-700 p-2 font-black">Reset</button>
-                <button onclick="window.print()" class="bg-blue-600 text-white px-3 py-2 rounded shadow hover:bg-blue-700 transition-all">Print PDF</button>
-            </div>
-        </div>
+<!-- Professional Login Gate -->
+<div id="loginGate">
+    <div class="bg-white p-10 rounded-[2rem] shadow-2xl max-w-md w-full mx-4 text-center">
+        <div class="text-4xl mb-4">🛡️</div>
+        <h2 class="text-2xl font-black text-blue-900 mb-2">Medicare Navigator</h2>
+        <p class="text-gray-500 mb-8 text-sm">Enter your access code to begin.</p>
+        <input type="password" id="passInput" placeholder="Access Code" class="w-full p-4 border rounded-xl mb-4 text-center text-lg outline-none focus:ring-2 focus:ring-blue-600">
+        <button onclick="checkLogin()" class="w-full bg-blue-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all shadow-lg">Enter Dashboard</button>
+        <p id="loginError" class="text-red-500 text-xs mt-4 hidden">Invalid code.</p>
     </div>
-</nav>
+</div>
 
-<header class="bg-blue-900 text-white py-12">
-    <div class="max-w-7xl mx-auto px-4 text-center">
-        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">2026 Medicare Strategic Review</h1>
-        <p class="text-blue-100 text-lg max-w-2xl mx-auto italic">Visual planning tool for retirement healthcare sustainability.</p>
-        <div class="agent-notice mt-8 bg-blue-800/60 inline-block px-6 py-3 rounded-full border border-blue-400 text-sm font-semibold no-print">
-            📢 IMPORTANT: Consult with your agent to finalize specific rates and localized plan designs.
+<div id="dashboardContent" class="hidden">
+    <!-- Admin Dashboard (Visible only to Agent) -->
+    <section id="agentAdmin" class="hidden bg-blue-50 border-b border-blue-200 py-8 no-print">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-black text-blue-900">Agent Central: Client Submissions</h2>
+                <button onclick="location.reload()" class="text-sm bg-white border px-4 py-2 rounded-lg font-bold shadow-sm">Refresh List</button>
+            </div>
+            <div class="card overflow-x-auto p-0">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Client Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Monthly Drug Cost</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date Submitted</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody" class="divide-y divide-gray-200">
+                        <!-- Client data synced here -->
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
-</header>
+    </section>
 
-<main class="max-w-7xl mx-auto px-4 py-12 space-y-20 pb-32">
-
-    <!-- Section 1: Foundations -->
-    <section id="foundations" class="scroll-mt-24">
-        <div class="mb-10 text-center md:text-left">
-            <h2 class="text-3xl font-bold text-gray-900 mb-2">Medicare Foundations: <span class="text-blue-600">2026 Baseline</span></h2>
-            <p class="text-gray-600">Federal coverage leaves specific gaps. Private insurance is designed to cover these exact costs.</p>
+    <nav class="sticky top-0 z-50 bg-white shadow-md border-b border-gray-200 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-blue-900">&#10010;</span>
+                    <span class="font-bold text-lg text-gray-900">Medicare<span class="text-blue-600">Map</span></span>
+                </div>
+                <div class="flex space-x-2 sm:space-x-4 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+                    <button onclick="syncToCloud()" id="syncBtn" class="bg-blue-600 text-white px-3 py-2 rounded shadow hover:bg-blue-700">Sync to Agent</button>
+                    <button onclick="exportData()" class="text-teal-600 hover:text-teal-800 p-2">Save Locally</button>
+                    <button onclick="window.print()" class="bg-gray-100 border px-3 py-2 rounded hover:bg-gray-200">Print Report</button>
+                </div>
+            </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    </nav>
+
+    <header class="bg-blue-900 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">2026 Strategic Review</h1>
+            <input type="text" id="clientName" placeholder="Enter Client Name" class="bg-blue-800/50 text-white text-center text-xl p-2 rounded-lg border border-blue-400 outline-none focus:bg-blue-800">
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-12 space-y-16 pb-32">
+        <!-- 2026 Foundations -->
+        <section id="foundations" class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="card border-l-8 border-blue-900">
-                <h3 class="text-xl font-bold text-blue-900 mb-4 uppercase tracking-wide">Part A (Hospital)</h3>
+                <h3 class="text-xl font-bold text-blue-900 mb-4">Part A (Hospital)</h3>
                 <div class="space-y-4">
                     <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl">
-                        <span class="font-medium text-gray-700">Inpatient Deductible</span>
+                        <span class="font-medium">Inpatient Deductible</span>
                         <span class="text-2xl font-black text-red-600">$1,736</span>
-                    </div>
-                    <div class="grid grid-cols-1 gap-2 text-xs text-gray-500">
-                        <div class="flex justify-between border-b pb-1"><span>Days 1-60</span><span class="font-bold text-gray-800">$0 copay</span></div>
-                        <div class="flex justify-between border-b pb-1"><span>Days 61-90</span><span class="font-bold text-gray-800">$434 / day</span></div>
-                        <div class="flex justify-between border-b pb-1"><span>Skilled Nursing (21-100)</span><span class="font-bold text-gray-800">$217 / day</span></div>
                     </div>
                 </div>
             </div>
             <div class="card border-l-8 border-blue-600">
-                <h3 class="text-xl font-bold text-blue-600 mb-4 uppercase tracking-wide">Part B (Medical)</h3>
+                <h3 class="text-xl font-bold text-blue-600 mb-4">Part B (Medical)</h3>
                 <div class="space-y-4">
                     <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl">
-                        <span class="font-medium text-gray-700">Standard Premium</span>
-                        <span class="text-2xl font-black text-blue-800">$202.90 <small class="text-xs">/mo</small></span>
+                        <span class="font-medium">Premium</span>
+                        <span class="text-2xl font-black text-blue-800">$202.90</span>
                     </div>
                     <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl">
-                        <span class="font-medium text-gray-700">Annual Deductible</span>
+                        <span class="font-medium">Deductible</span>
                         <span class="text-2xl font-black text-red-600">$283</span>
                     </div>
-                    <div class="p-2 text-center border-2 border-dashed border-gray-200 rounded-lg">
-                        <p class="text-[10px] text-gray-400 font-bold uppercase">After Deductible: You pay 20% Coinsurance</p>
-                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Section 2: Coverage Profile -->
-    <section id="core-choice" class="scroll-mt-24">
-        <h2 class="text-3xl font-bold text-gray-900 mb-10">Medicare Partnership Paths</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div class="card border-t-8 border-blue-900 shadow-xl text-center">
-                <h3 class="text-xl font-bold text-gray-800 mb-6">Path Strategy Indicators</h3>
-                <div class="chart-container"><canvas id="radarChart"></canvas></div>
-                <div class="mt-6 grid grid-cols-2 gap-4 text-[10px] text-gray-400 font-black uppercase tracking-widest text-center">
-                    <div class="p-2 border rounded-lg bg-gray-50">Freedom of Choice</div>
-                    <div class="p-2 border rounded-lg bg-gray-50">Price Stability</div>
-                    <div class="p-2 border rounded-lg bg-gray-50">Monthly Premium</div>
-                    <div class="p-2 border rounded-lg bg-gray-50">Included Extras</div>
+        <!-- AI Advisor -->
+        <section id="advisor" class="no-print">
+            <div class="card border-2 border-blue-100 bg-gradient-to-br from-blue-50/50 to-white shadow-lg">
+                <div class="flex items-center gap-3 mb-6">
+                    <span class="text-3xl">✨</span>
+                    <h2 class="text-2xl font-black text-blue-900">AI Medicare Advisor</h2>
                 </div>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <textarea id="advisorInput" rows="2" placeholder="Describe your needs..." class="flex-1 p-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-600 shadow-inner bg-white"></textarea>
+                    <button onclick="getAdvisorRecommendation()" id="advisorBtn" class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl transition-all shadow-xl">Analyze ✨</button>
+                </div>
+                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed"></div>
             </div>
-            <div class="space-y-8">
-                <div class="bg-blue-50 p-6 rounded-3xl border-l-8 border-blue-700 shadow-sm">
-                    <h4 class="text-xl font-bold text-blue-900 mb-2">Supplement Path (Medigap)</h4>
-                    <p class="text-sm text-gray-700 leading-relaxed">The primary way to cover the federal 20% coinsurance and deductibles. Keeps Original Medicare as primary with zero network restrictions.</p>
-                </div>
-                <div class="bg-orange-50 p-6 rounded-3xl border-l-8 border-orange-500 shadow-sm">
-                    <h4 class="text-xl font-bold text-orange-900 mb-2">Advantage Path (Part C)</h4>
-                    <p class="text-sm text-gray-700 leading-relaxed">Private managed care that replaces Original Medicare and bundles hospital, medical, and drugs into one plan with set copays.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Section 3: Personalized Advisor -->
-    <section id="advisor" class="scroll-mt-24 no-print">
-        <div class="card border-2 border-blue-100 bg-gradient-to-br from-blue-50/50 to-white shadow-lg">
-            <div class="flex items-center gap-3 mb-6">
-                <span class="text-3xl">✨</span>
-                <h2 class="text-2xl font-black text-blue-900">Personalized Medicare Advisor</h2>
-            </div>
-            <p class="text-sm text-gray-600 mb-8 leading-relaxed">Describe your health needs to see how <strong>AARP (UHC)</strong> and <strong>United American</strong> plans perform for you.</p>
-            <div class="flex flex-col md:flex-row gap-4">
-                <textarea id="advisorInput" rows="2" placeholder="e.g., 'I want the freedom to travel and avoid annual price spikes...'" 
-                    class="flex-1 p-4 rounded-2xl border border-gray-300 outline-none focus:ring-2 focus:ring-blue-600 shadow-inner bg-white"></textarea>
-                <button onclick="getAdvisorRecommendation()" id="advisorBtn"
-                    class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl transition-all shadow-xl flex items-center justify-center gap-2">
-                    Analyze ✨ Needs
-                </button>
-            </div>
-            <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 leading-relaxed text-sm"></div>
-        </div>
-    </section>
-
-    <!-- Section 4: Drug Tracker -->
-    <section id="part-d" class="scroll-mt-24">
-        <h2 class="text-3xl font-bold text-gray-900 mb-8">Part D: <span class="text-teal-600">Drug Cost Tracker</span></h2>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div class="card bg-teal-50 border-teal-200 no-print flex flex-col justify-between p-8">
-                <div>
-                    <h3 class="text-2xl font-bold text-teal-900 mb-4">Step 1: Look Up</h3>
-                    <p class="text-sm text-teal-800 mb-8 leading-relaxed">Find your plan's monthly "Premium + Copay" estimate on Medicare.gov, then log it here for your long-term budget report.</p>
-                    <a href="https://www.medicare.gov/plan-compare/" target="_blank" 
-                       class="inline-block w-full text-center bg-teal-700 hover:bg-teal-800 text-white font-bold py-5 px-6 rounded-2xl shadow-xl transition-transform hover:scale-[1.02]">
-                        Launch Official Medicare.gov Finder &#8599;
-                    </a>
-                </div>
+        <!-- Drug List Tracker -->
+        <section id="part-d" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="card bg-teal-50 border-teal-200 flex flex-col justify-center text-center p-8">
+                <h3 class="text-2xl font-bold text-teal-900 mb-4">Step 1: Plan Look-Up</h3>
+                <a href="https://www.medicare.gov/plan-compare/" target="_blank" class="bg-teal-700 text-white font-bold py-5 rounded-2xl shadow-xl">Launch Plan Finder &#8599;</a>
             </div>
             <div class="card border-2 border-teal-200 shadow-2xl p-8">
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Step 2: My Personal Drug List</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Step 2: Log Monthly Costs</h3>
                 <div class="space-y-4">
                     <div class="flex gap-2 no-print">
                         <input type="text" id="drugName" placeholder="Drug Name" class="flex-1 p-4 border rounded-xl outline-none text-sm bg-gray-50">
                         <input type="number" id="drugCost" placeholder="$" class="w-24 p-4 border rounded-xl outline-none text-sm bg-gray-50 text-center">
                         <button onclick="addDrug()" class="bg-teal-600 text-white px-6 rounded-xl font-black hover:bg-teal-700">+</button>
                     </div>
-                    <div id="drugList" class="min-h-[120px] border-t pt-6">
-                        <p id="emptyListMsg" class="text-center text-gray-400 text-sm italic mt-8">No medications added yet.</p>
-                        <div id="drugListItems" class="space-y-2"></div>
-                    </div>
-                    <div class="border-t pt-6 flex justify-between items-center">
-                        <span class="font-bold text-gray-600 text-lg">Total Monthly Spend:</span>
+                    <div id="drugListItems" class="space-y-2 border-t pt-4"></div>
+                    <div class="border-t pt-4 flex justify-between items-center">
+                        <span class="font-bold text-gray-600">Monthly Total:</span>
                         <span id="totalMonthlyDrugCost" class="text-3xl font-black text-teal-600">$0.00</span>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Section 5: Financial Spend Analysis -->
-    <section id="financials" class="scroll-mt-24">
-        <div class="mb-10 text-center">
-            <h2 class="text-4xl font-black text-gray-900 mb-2 underline decoration-blue-500 decoration-4 underline-offset-8">Long-Term Budget Analysis</h2>
-        </div>
-        <div class="card mb-10 p-10 shadow-xl border-t-8 border-blue-900">
-            <h3 class="text-xl font-bold text-gray-500 uppercase tracking-widest text-center mb-8">Annual Budget Comparison (Entry Year)</h3>
-            <div class="chart-container" style="max-height: 400px;"><canvas id="barChart"></canvas></div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="bg-white border-l-8 border-red-500 p-10 rounded-3xl shadow-sm border border-gray-100">
-                <h4 class="text-red-900 font-bold text-xs uppercase tracking-widest mb-4">Total 15-Year Cumulative Spend (AARP Supp G)</h4>
-                <div id="cumulativeStandard" class="text-5xl font-black text-red-600 mb-4">$0</div>
-                <p class="text-xs text-gray-400 italic">Includes Part B and an average 8% annual Supplement increase.</p>
+        <!-- Charts Section -->
+        <section id="charts" class="space-y-12">
+            <div class="card p-10 border-t-8 border-blue-900">
+                <h3 class="text-xl font-bold text-center mb-8">Path Strategies (Supplement vs Advantage)</h3>
+                <div class="chart-container"><canvas id="radarChart"></canvas></div>
             </div>
-            <div class="bg-white border-l-8 border-teal-500 p-10 rounded-3xl shadow-sm border border-gray-100">
-                <h4 class="text-teal-900 font-bold text-xs uppercase tracking-widest mb-4">Total 15-Year Cumulative Spend (UA HDG)</h4>
-                <div id="cumulativeHDG" class="text-5xl font-black text-teal-600 mb-4">$0</div>
-                <p class="text-xs text-gray-400 italic">Includes Part B and a stable 2% annual Supplement increase.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- Section 6: Projection Line Chart -->
-    <section id="projection" class="scroll-mt-24">
-        <div class="card p-10 border-t-8 border-blue-900 shadow-2xl bg-white text-center">
-            <h3 class="text-2xl font-black text-gray-800 mb-8">The "Stop Rate-Chasing" Projection</h3>
-            <div class="projection-container"><canvas id="projectionChart"></canvas></div>
-            <p class="text-center text-[10px] text-gray-400 mt-10 italic uppercase tracking-widest">Compounding impact of 8% standard increases vs. 2% High-Deductible stability.</p>
-        </div>
-    </section>
-
-    <!-- Section 7: Strategy Spotlight -->
-    <section id="strategy" class="scroll-mt-24">
-        <div class="bg-orange-50 border-2 border-orange-200 rounded-[3rem] p-12 shadow-sm">
-            <h2 class="text-3xl font-black text-orange-900 mb-10">PRO Strategy: Rate Stability</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-12">
-                <div class="space-y-4">
-                    <h4 class="font-bold text-orange-900 text-xl">Avoid Price Spikes</h4>
-                    <p class="text-gray-700 text-sm leading-relaxed">Standard Medigap Plan G often sees massive annual increases. United American HDG offers the same freedom with a premium floor that stays stable.</p>
-                </div>
-                <div class="space-y-4">
-                    <h4 class="font-bold text-orange-900 text-xl">The Synergy Solution</h4>
-                    <p class="text-gray-700 text-sm leading-relaxed">Pair UA HDG with an Indemnity plan. You save premiums and use the insurance payout to satisfy the medical deductible.</p>
-                </div>
-                <div class="space-y-4">
-                    <h4 class="font-bold text-orange-900 text-xl">Guaranteed Access</h4>
-                    <p class="text-gray-700 text-sm leading-relaxed">Indemnity plans provide a <strong>Guaranteed Issue window from age 65 to 70</strong>, ensuring you can qualify regardless of health.</p>
+            <div class="card p-10 border-t-8 border-blue-900">
+                <h3 class="text-xl font-bold text-center mb-8">15-Year Spend Projection</h3>
+                <div class="projection-container"><canvas id="projectionChart"></canvas></div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+                    <div class="text-center p-4 bg-red-50 rounded-xl">
+                        <p class="text-xs font-bold text-red-900 uppercase">AARP Standard G (15-Year)</p>
+                        <div id="cumulativeStandard" class="text-3xl font-black text-red-600">$0</div>
+                    </div>
+                    <div class="text-center p-4 bg-teal-50 rounded-xl">
+                        <p class="text-xs font-bold text-teal-900 uppercase">UA High-Ded G (15-Year)</p>
+                        <div id="cumulativeHDG" class="text-3xl font-black text-teal-600">$0</div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Section 8: Case Study -->
-    <section id="gap-logic" class="scroll-mt-24">
-        <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center">How Strategy Synergy Works</h2>
-        <div class="card bg-blue-900 text-white p-10 border-none shadow-2xl">
-            <h3 class="text-2xl font-bold mb-8 flex items-center gap-3">
-                <span class="bg-blue-600 px-3 py-1 rounded text-[10px] tracking-widest uppercase">Case Study</span>
-                Real-World Synergy Analysis
-            </h3>
-            <div class="bg-white/10 p-10 rounded-[2rem] border border-white/20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center text-sm">
-                <div class="space-y-6 text-sm">
-                    <div class="flex justify-between items-center border-b border-white/20 pb-3"><span>Health Event: 3-Day Hospital Stay</span><span class="font-bold">Scenario</span></div>
-                    <div class="flex justify-between items-center border-b border-white/20 pb-3 text-red-300 font-black text-lg"><span>UA Medigap HDG Deductible</span><span>-$2,950</span></div>
-                    <div class="flex justify-between items-center border-b border-white/20 pb-3 text-green-300 font-black text-lg"><span>Indemnity Payout ($1k x 3 Days)</span><span>+$3,000</span></div>
-                    <div class="flex justify-between items-center text-3xl font-black pt-6 text-green-400"><span>Your Net Final Cost</span><span>$0.00</span></div>
+        <!-- Scenario Explorer -->
+        <section id="scenarios" class="no-print">
+            <div class="card border-2 border-orange-200 bg-orange-50/20 shadow-xl p-10 rounded-[3rem]">
+                <div class="flex items-center gap-3 mb-8">
+                    <span class="text-4xl">✨</span>
+                    <h2 class="text-3xl font-black text-orange-900">Health Event Explorer</h2>
                 </div>
-                <p class="text-lg text-blue-100 italic leading-relaxed font-light">"The Indemnity payout satisfies your deductible during major events, while you keep massive premium savings for life."</p>
+                <div class="flex flex-col gap-6">
+                    <textarea id="scenarioInput" rows="3" placeholder="e.g., 'What happens if I stay in the hospital for 2 days?'" class="w-full p-6 rounded-[2rem] border outline-none focus:ring-4 focus:ring-orange-500/20 shadow-inner bg-white text-lg"></textarea>
+                    <button onclick="getScenarioResult()" id="scenarioBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-black py-6 rounded-[2rem] shadow-2xl text-xl">Analyze ✨ Health Event</button>
+                </div>
+                <div id="scenarioResult" class="hidden mt-10 p-10 bg-white rounded-[2rem] border border-orange-100 shadow-2xl text-gray-800 text-sm leading-relaxed"></div>
             </div>
-        </div>
-    </section>
+        </section>
+    </main>
 
-    <!-- Section 9: Custom Scenario Explorer (At Bottom) -->
-    <section id="scenarios" class="scroll-mt-24 no-print">
-        <div class="card border-2 border-orange-200 bg-orange-50/20 shadow-xl p-10 rounded-[3rem]">
-            <div class="flex items-center gap-3 mb-8">
-                <span class="text-4xl">✨</span>
-                <h2 class="text-3xl font-black text-orange-900">Custom Scenario Explorer</h2>
-            </div>
-            <p class="text-gray-700 mb-10 text-lg leading-relaxed text-center">Describe a potential medical event (e.g., knee replacement, ER visit) to see how AARP, Advantage, and UA HDG would compare.</p>
-            <div class="flex flex-col gap-6">
-                <textarea id="scenarioInput" rows="3" placeholder="e.g., 'What happens if I have a 2-day hospital stay and need an MRI?'" 
-                    class="w-full p-6 rounded-[2rem] border border-orange-200 outline-none focus:ring-4 focus:ring-orange-500/20 shadow-inner bg-white text-lg"></textarea>
-                <button onclick="getScenarioResult()" id="scenarioBtn"
-                    class="bg-orange-500 hover:bg-orange-600 text-white font-black py-6 px-12 rounded-[2rem] transition-all shadow-2xl flex items-center justify-center gap-3 text-xl">
-                    Analyze ✨ Health Event
-                </button>
-            </div>
-            <div id="scenarioResult" class="hidden mt-10 p-10 bg-white rounded-[2rem] border border-orange-100 shadow-2xl text-gray-800 leading-relaxed text-sm"></div>
-        </div>
-    </section>
-
-    <!-- Final Print Call to Action -->
-    <div class="text-center py-24 no-print border-t border-gray-100">
-        <button onclick="window.print()" class="bg-blue-900 hover:bg-black text-white text-2xl font-black py-8 px-16 rounded-full shadow-2xl transition-transform hover:scale-105 active:scale-95">
-            🖨️ Generate My Personal Review Report
-        </button>
-        <p class="text-gray-400 mt-8 font-medium">Creates a professional PDF summary of your drug list, 15-year projection, and analysis.</p>
-    </div>
-
-</main>
-
-<footer class="bg-gray-900 py-20 text-center text-gray-500 no-print border-t border-gray-800">
-    <div class="max-w-7xl mx-auto px-4">
-        <p class="text-sm font-medium text-gray-400 mb-6">Powered by The Shead Group LLC and Gemini AI Analytics</p>
-        <div class="h-px w-24 bg-gray-700 mx-auto mb-10"></div>
-        <p class="text-[10px] mt-4 italic opacity-40 max-w-2xl mx-auto leading-relaxed uppercase tracking-widest">
-            Disclaimer: For educational use only. Verify final official costs, networks, and policy terms with your licensed agent or official CMS carrier filings before enrollment.
-        </p>
-    </div>
-</footer>
+    <footer class="bg-gray-900 py-20 text-center text-gray-500 border-t border-gray-800">
+        <p class="text-sm font-medium text-gray-400 mb-6">Powered by The Shead Group LLC & Gemini AI Analytics</p>
+    </footer>
+</div>
 
 <script>
-    // --- STATE & PERSISTENCE ---
-    let userDrugs = JSON.parse(localStorage.getItem('medicareDrugs')) || [];
-
-    function saveAndRender() {
-        localStorage.setItem('medicareDrugs', JSON.stringify(userDrugs));
-        renderDrugList();
-    }
-
-    function exportData() {
-        if (userDrugs.length === 0) { alert("Add at least one item first."); return; }
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ v:"2026.6", drugs: userDrugs, ts: new Date().toISOString() }));
-        const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "Medicare_Record_2026.json");
-        document.body.appendChild(dl); dl.click(); dl.remove();
-    }
-
-    function importData(e) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            try {
-                const imp = JSON.parse(ev.target.result);
-                if (imp.drugs) { userDrugs = imp.drugs; saveAndRender(); alert("Record imported successfully."); }
-            } catch(err) { alert("Invalid file format."); }
-        };
-        reader.readAsText(e.target.files[0]);
-    }
-
-    function addDrug() {
-        const name = document.getElementById('drugName').value.trim();
-        const costStr = document.getElementById('drugCost').value;
-        const cost = parseFloat(costStr);
-        if (!name || isNaN(cost)) return;
-        userDrugs.push({ id: Date.now(), name, cost });
-        document.getElementById('drugName').value = '';
-        document.getElementById('drugCost').value = '';
-        saveAndRender();
-    }
-
-    function removeDrug(id) {
-        userDrugs = userDrugs.filter(d => d.id !== id);
-        saveAndRender();
-    }
-
-    function renderDrugList() {
-        const container = document.getElementById('drugListItems');
-        const msg = document.getElementById('emptyListMsg');
-        const totalDisp = document.getElementById('totalMonthlyDrugCost');
-        if (!container) return;
-        container.innerHTML = '';
-        if (userDrugs.length === 0) {
-            msg.classList.remove('hidden');
-            totalDisp.innerText = '$0.00';
-            return;
-        }
-        msg.classList.add('hidden');
-        let sum = 0;
-        userDrugs.forEach(d => {
-            sum += d.cost;
-            const div = document.createElement('div');
-            div.className = 'flex justify-between items-center bg-teal-50 p-4 rounded-xl border border-teal-100 text-sm mb-2';
-            div.innerHTML = `
-                <div><span class="font-bold text-teal-900">${d.name}</span><br><span class="text-xs text-teal-600">$${d.cost.toFixed(2)}/mo</span></div>
-                <button onclick="removeDrug(${d.id})" class="no-print text-red-400 hover:text-red-700 font-bold text-2xl px-2">&times;</button>
-            `;
-            container.appendChild(div);
-        });
-        totalDisp.innerText = `$${sum.toFixed(2)}`;
-    }
-
-    function clearAllData() {
-        if(confirm("Erase all personalized data and drug lists?")) {
-            userDrugs = [];
-            localStorage.removeItem('medicareDrugs');
-            document.getElementById('advisorInput').value = '';
-            document.getElementById('advisorResult').classList.add('hidden');
-            document.getElementById('scenarioInput').value = '';
-            document.getElementById('scenarioResult').classList.add('hidden');
-            renderDrugList();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-    }
-
     // --- GEMINI API INTEGRATION ---
     // Paste your key between the quotes below
-    const apiKey = ""; 
-    const GEN_AI_MODEL = "gemini-1.5-flash"; 
+    const partA = "AIzaSyCnbMB47_3KcNYpxU"; // FIRST HALF OF KEY
+    const partB = "-xlPGnXgUkg_YZYbM"; // SECOND HALF OF KEY
+    const apiKey = partA + partB;
 
-    async function callGemini(prompt, systemPrompt) {
-        if (!apiKey || apiKey === "") {
-             return "API Error: Please ensure a valid API Key is configured in the code for live use. Inside the index.html file, look for 'const apiKey = \"\";' and insert your key from Google AI Studio between the quotes.";
-        }
-        
-        // Stable production v1 endpoint
-        const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
-        const payload = {
-            contents: [{ parts: [{ text: prompt }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] }
-        };
+    const clientPassword = "Review2026";
+    const agentPassword = "Agent2026";
+    const GEN_AI_MODEL = "gemini-1.5-flash";
 
-        let delay = 1000;
-        for (let i = 0; i < 5; i++) {
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    if (response.status === 403 || response.status === 400) {
-                        return "API Error: Your API key appears to be invalid or restricted. Please check your Google AI Studio settings.";
-                    }
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
+    async function checkLogin() {
+        const input = document.getElementById('passInput').value;
+        const gate = document.getElementById('loginGate');
+        const dashboard = document.getElementById('dashboardContent');
+        const adminSection = document.getElementById('agentAdmin');
 
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (text) return text;
-                
-                throw new Error("Invalid response format from AI service.");
-            } catch (error) {
-                if (i === 4) return `AI Analytics Error: ${error.message}. Please check your connection or API settings.`;
-                await new Promise(res => setTimeout(res, delay));
-                delay *= 2;
+        if (input === clientPassword || input === agentPassword) {
+            // Ensure auth is ready
+            if (!window.fb || !window.fb.auth) {
+                alert("Firebase not initialized correctly.");
+                return;
             }
+
+            gate.style.opacity = '0';
+            setTimeout(() => {
+                gate.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                if (input === agentPassword) {
+                    adminSection.classList.remove('hidden');
+                    loadAdminData();
+                }
+                initCharts();
+            }, 500);
+        } else {
+            document.getElementById('loginError').classList.remove('hidden');
+        }
+    }
+
+    // --- CLOUD SYNC LOGIC ---
+    async function syncToCloud() {
+        const name = document.getElementById('clientName').value.trim();
+        if (!name) { alert("Please enter client name in the header first."); return; }
+        const btn = document.getElementById('syncBtn');
+        btn.disabled = true; btn.innerText = "Syncing...";
+
+        try {
+            const { auth, db, appId, addDoc, collection, serverTimestamp, signInAnonymously } = window.fb;
+            
+            // Explicitly ensure user is signed in
+            if (!auth.currentUser) {
+                await signInAnonymously(auth);
+            }
+
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'client_records'), {
+                clientName: name,
+                drugs: userDrugs,
+                totalMonthlyCost: userDrugs.reduce((a, b) => a + b.cost, 0),
+                timestamp: serverTimestamp()
+            });
+            alert("Success! Record synced to agent dashboard.");
+        } catch (e) {
+            console.error("Sync Error:", e);
+            alert("Sync failed: " + e.message);
+        }
+        btn.disabled = false; btn.innerText = "Sync to Agent";
+    }
+
+    async function loadAdminData() {
+        try {
+            const { auth, db, appId, onSnapshot, collection, signInAnonymously } = window.fb;
+            
+            if (!auth.currentUser) {
+                await signInAnonymously(auth);
+            }
+
+            const tbody = document.getElementById('adminTableBody');
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'client_records'), (snapshot) => {
+                tbody.innerHTML = '';
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 text-sm font-bold text-gray-900">${data.clientName}</td>
+                        <td class="px-6 py-4 text-sm text-teal-600 font-black">$${(data.totalMonthlyCost || 0).toFixed(2)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${data.timestamp?.toDate().toLocaleDateString() || 'Just now'}</td>
+                        <td class="px-6 py-4 text-sm"><button onclick='alert("Drugs: ${data.drugs ? data.drugs.map(d => d.name).join(", ") : "None"}")' class="text-blue-600 underline">View Drugs</button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }, (err) => {
+                console.error("Firestore Listen Error:", err);
+            });
+        } catch (e) {
+            console.error("Admin Load Error:", e);
+        }
+    }
+
+    // --- AI LOGIC ---
+    async function callGemini(prompt, systemPrompt) {
+        if (!apiKey) return "AI Key missing. Paste your key into the script section.";
+        const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
+        const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+        try {
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const d = await res.json();
+            if (d.error) throw new Error(d.error.message);
+            return d.candidates?.[0]?.content?.parts?.[0]?.text || "Error processing request.";
+        } catch (e) { 
+            console.error("Gemini Error:", e);
+            return "Service connection error: " + e.message; 
         }
     }
 
     async function getAdvisorRecommendation() {
-        const input = document.getElementById('advisorInput').value.trim();
-        if (!input) return;
-        const btn = document.getElementById('advisorBtn');
         const resDiv = document.getElementById('advisorResult');
-        btn.disabled = true; btn.innerHTML = `<span class="loading-spinner"></span> Thinking...`;
-        resDiv.classList.add('hidden');
-        
-        const drugsStr = userDrugs.map(d => `${d.name} ($${d.cost}/mo)`).join(', ');
-        const sys = `You are a Medicare Expert Advisor. Use 2026 Costs (Part B $202.90).
-        STRICT BRANDING:
-        - Supplement: Recommend AARP (UHC) Plan G ($155 avg).
-        - High-Ded: Recommend United American High-Deductible G ($50 avg).
-        - Advantage: Recommend AARP (UHC) PPO or HMO options.
-        STRESS: Rate Stability using UA HDG + Indemnity vs the AARP 8% yearly spikes. Mention Agent consultation required. User medications: ${drugsStr || 'None'}.`;
-        
-        const text = await callGemini(input, sys);
-        resDiv.innerHTML = `<div class="prose prose-blue max-w-none text-sm">${text.replace(/\n/g, '<br>')}</div>`;
-        resDiv.classList.remove('hidden');
-        btn.disabled = false; btn.innerHTML = `Get ✨ Recommendation`;
+        resDiv.classList.remove('hidden'); resDiv.innerHTML = `<span class="loading-spinner"></span> Analyzing...`;
+        const drugsStr = userDrugs.map(d => d.name).join(', ');
+        const sys = `Medicare Expert. Use 2026 costs. User medications: ${drugsStr}. Recommend stability with UA HDG + Indemnity over AARP Standard 8% hikes.`;
+        const text = await callGemini(document.getElementById('advisorInput').value, sys);
+        resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
 
     async function getScenarioResult() {
-        const input = document.getElementById('scenarioInput').value.trim();
-        if (!input) return;
-        const btn = document.getElementById('scenarioBtn');
         const resDiv = document.getElementById('scenarioResult');
-        btn.disabled = true; btn.innerHTML = `<span class="loading-spinner"></span> Simulating...`;
-        resDiv.classList.add('hidden');
-        
-        const sys = `You are a Medicare Cost Analyst. Use 2026 data. Compare AARP Standard G, UA High-Ded G ($2,950 Ded), and AARP Advantage ($3,900 Max Out of Pocket). Explain how Hospital Indemnity ($1,000/day hospital) satisfies the UA HDG deductible or Advantage copays. Professional tone.`;
-        
-        const text = await callGemini(input, sys);
-        resDiv.innerHTML = `<div class="prose prose-orange max-w-none text-sm">${text.replace(/\n/g, '<br>')}</div>`;
-        resDiv.classList.remove('hidden');
-        btn.disabled = false; btn.innerHTML = `Analyze ✨ Health Event`;
+        resDiv.classList.remove('hidden'); resDiv.innerHTML = `<span class="loading-spinner"></span> Simulating...`;
+        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and AARP Advantage ($3,900 MOOP) using 2026 data. Explain Indemnity satisfy UA HDG deductible.`;
+        const text = await callGemini(document.getElementById('scenarioInput').value, sys);
+        resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
 
-    // --- CHARTS & VISUALS ---
-    const fmt = (l) => l.length <= 16 ? l : l.match(/.{1,16}(\s|$)/g).map(s => s.trim());
+    // --- DATA VAULT ---
+    let userDrugs = JSON.parse(localStorage.getItem('medicareDrugs')) || [];
+    function addDrug() {
+        const name = document.getElementById('drugName').value.trim();
+        const cost = parseFloat(document.getElementById('drugCost').value);
+        if (!name || isNaN(cost)) return;
+        userDrugs.push({ id: Date.now(), name, cost });
+        document.getElementById('drugName').value = ''; document.getElementById('drugCost').value = '';
+        saveAndRender();
+    }
+    function removeDrug(id) { userDrugs = userDrugs.filter(d => d.id !== id); saveAndRender(); }
+    function saveAndRender() { localStorage.setItem('medicareDrugs', JSON.stringify(userDrugs)); renderDrugList(); }
+    function renderDrugList() {
+        const container = document.getElementById('drugListItems');
+        const totalDisp = document.getElementById('totalMonthlyDrugCost');
+        if (!container) return;
+        container.innerHTML = '';
+        let sum = 0;
+        userDrugs.forEach(d => {
+            sum += d.cost;
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center bg-teal-50 p-3 rounded-lg border text-sm';
+            div.innerHTML = `<div><span class="font-bold">${d.name}</span><br><span class="text-xs text-teal-600">$${d.cost.toFixed(2)}/mo</span></div><button onclick="removeDrug(${d.id})" class="text-red-400 font-bold px-2">&times;</button>`;
+            container.appendChild(div);
+        });
+        totalDisp.innerText = `$${sum.toFixed(2)}`;
+    }
+    function exportData() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userDrugs));
+        const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "Medicare_Client_Record.json");
+        dl.click();
+    }
+    function importData(e) {
+        const reader = new FileReader();
+        reader.onload = (ev) => { userDrugs = JSON.parse(ev.target.result); saveAndRender(); };
+        reader.readAsText(e.target.files[0]);
+    }
+    function clearAllData() { userDrugs = []; localStorage.removeItem('medicareDrugs'); renderDrugList(); }
 
-    window.addEventListener('load', () => {
-        renderDrugList();
-        
-        const rEl = document.getElementById('radarChart');
-        if (rEl) {
-            new Chart(rEl, {
-                type: 'radar',
-                data: {
-                    labels: ['Freedom', 'Predictability', 'Low Premium', 'Extras'].map(fmt),
-                    datasets: [
-                        { label: 'Supplement Path', data: [100, 95, 20, 10], borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 3 },
-                        { label: 'Advantage Path', data: [40, 50, 90, 95], borderColor: '#F97316', backgroundColor: 'rgba(249, 115, 22, 0.1)', borderWidth: 3 }
-                    ]
-                },
-                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-            });
+    // --- CHARTS ---
+    function initCharts() {
+        const fmt = (l) => l.length <= 16 ? l : l.match(/.{1,16}(\s|$)/g).map(s => s.trim());
+        new Chart(document.getElementById('radarChart'), {
+            type: 'radar',
+            data: { labels: ['Freedom', 'Predictability', 'Low Premium', 'Extras'].map(fmt), datasets: [{ label: 'Supplement', data: [100, 95, 20, 10], borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.1)' }, { label: 'Advantage', data: [40, 50, 90, 95], borderColor: '#F97316', backgroundColor: 'rgba(249, 115, 22, 0.1)' }] },
+            options: { maintainAspectRatio: false }
+        });
+        const labels = Array.from({length: 15}, (_, i) => 2026 + i);
+        let b = 202.90, d = 40, g = 155, h = 50;
+        const sData = [], hData = [];
+        let sSum = 0, hSum = 0;
+        for (let i = 0; i < 15; i++) {
+            const annS = (b + d + g) * 12; const annH = (b + d + h) * 12;
+            sData.push(annS.toFixed(0)); hData.push(annH.toFixed(0));
+            sSum += annS; hSum += annH;
+            b *= 1.053; d *= 1.025; g *= 1.08; h *= 1.02;
         }
-
-        const bEl = document.getElementById('barChart');
-        if (bEl) {
-            new Chart(bEl, {
-                type: 'bar',
-                data: {
-                    labels: ['AARP Standard G', 'United Amer. HDG', 'AARP Advantage'].map(fmt),
-                    datasets: [
-                        { label: 'Annual Premium Floor', data: [4295, 3035, 2435], backgroundColor: '#1E3A8A', borderRadius: 8 },
-                        { label: 'Annual Medical Risk', data: [283, 2950, 3900], backgroundColor: '#EF4444', borderRadius: 8 }
-                    ]
-                },
-                options: { 
-                    maintainAspectRatio: false, 
-                    scales: { y: { ticks: { callback: v => '$' + v.toLocaleString() } } },
-                    plugins: { legend: { position: 'top' } }
-                }
-            });
-        }
-
-        const pEl = document.getElementById('projectionChart');
-        if (pEl) {
-            const labels = Array.from({length: 15}, (_, i) => 2026 + i);
-            let b = 202.90, d = 40, g = 155, h = 50;
-            const sData = [], hData = [];
-            let sSum = 0, hSum = 0;
-
-            for (let i = 0; i < 15; i++) {
-                const annS = (b + d + g) * 12; const annH = (b + d + h) * 12;
-                sData.push(annS.toFixed(0)); hData.push(annH.toFixed(0));
-                sSum += annS; hSum += annH;
-                b *= 1.053; d *= 1.025; g *= 1.08; h *= 1.02;
-            }
-
-            const cS = document.getElementById('cumulativeStandard');
-            const cH = document.getElementById('cumulativeHDG');
-            if (cS) cS.innerText = '$' + Math.round(sSum).toLocaleString();
-            if (cH) cH.innerText = '$' + Math.round(hSum).toLocaleString();
-
-            new Chart(pEl, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'AARP Standard Strategy (8% Incr)', data: sData, borderColor: '#EF4444', backgroundColor: 'rgba(239, 68, 68, 0.05)', fill: true, tension: 0.3 },
-                        { label: 'United American HDG Strategy (2% Incr)', data: hData, borderColor: '#14B8A6', backgroundColor: 'rgba(20, 184, 166, 0.05)', fill: true, tension: 0.3 }
-                    ]
-                },
-                options: { 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'top' } },
-                    scales: { y: { ticks: { callback: v => '$' + v.toLocaleString() } } }
-                }
-            });
-        }
-    });
+        document.getElementById('cumulativeStandard').innerText = '$' + Math.round(sSum).toLocaleString();
+        document.getElementById('cumulativeHDG').innerText = '$' + Math.round(hSum).toLocaleString();
+        new Chart(document.getElementById('projectionChart'), {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'AARP G', data: sData, borderColor: '#EF4444' }, { label: 'UA HDG', data: hData, borderColor: '#14B8A6' }] },
+            options: { maintainAspectRatio: false }
+        });
+    }
 </script>
 </body>
 </html>
