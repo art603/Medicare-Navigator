@@ -81,7 +81,7 @@
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 uppercase">2026 Strategic Review</h1>
             <div class="relative max-w-md mx-auto">
                 <input type="text" id="clientName" placeholder="Enter Client Name" 
-                    class="relative z-20 w-full bg-white text-blue-900 text-center text-xl p-3 rounded-xl border-2 border-blue-400 shadow-inner outline-none focus:ring-4 focus:ring-blue-300 transition-all">
+                    class="relative z-10 w-full bg-white text-blue-900 text-center text-xl p-3 rounded-xl border-2 border-blue-400 shadow-inner outline-none focus:ring-4 focus:ring-blue-300 transition-all">
                 <div class="bg-blue-800/40 p-3 rounded-xl mt-3 border border-blue-700/50">
                     <p class="text-blue-100 text-xs font-bold leading-relaxed">
                         Remember to consult with your Shead Group Advisor with the desired recommendation.
@@ -156,18 +156,36 @@
         <section id="part-d" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div class="card bg-teal-50 border-teal-200 flex flex-col justify-center text-center p-8">
                 <h3 class="text-2xl font-bold text-teal-900 mb-4 uppercase tracking-widest">Drug Plan Finder</h3>
-                <p class="text-teal-800 text-sm mb-8 leading-relaxed">Login to Medicare.gov to get your plan's monthly "Premium + Copay" total, then record it to the right for your report.</p>
+                <p class="text-teal-800 text-sm mb-8 leading-relaxed">Login to Medicare.gov to get your plan's monthly "Premium + Copay" total, then record them to the right.</p>
                 <a href="https://www.medicare.gov/plan-compare/" target="_blank" class="bg-teal-700 text-white font-bold py-5 rounded-2xl shadow-xl transition-transform hover:scale-[1.02]">Launch Medicare.gov Finder &#8599;</a>
             </div>
             <div class="card border-2 border-teal-200 shadow-2xl p-8">
-                <h3 class="text-xl font-bold text-gray-900 mb-4">My Personal Drug List</h3>
-                <div class="flex gap-2 no-print mb-4">
-                    <input type="text" id="drugName" placeholder="Drug Name" class="flex-1 p-4 border rounded-xl outline-none text-sm bg-gray-50">
-                    <input type="number" id="drugCost" placeholder="$" class="w-24 p-4 border rounded-xl outline-none text-sm bg-gray-50 text-center">
-                    <button onclick="addDrug()" class="bg-teal-600 text-white px-6 rounded-xl font-black hover:bg-teal-700">+</button>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">My Drug & Plan Costs</h3>
+                
+                <!-- Plan Premium Row -->
+                <div class="mb-6 p-4 bg-teal-50 rounded-xl border-2 border-teal-200">
+                    <label class="block text-xs font-black text-teal-900 uppercase mb-2">Monthly Part D Plan Premium</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="partDPremiumInput" placeholder="Enter Plan Premium Amount ($)" 
+                            class="w-full p-4 border rounded-xl outline-none text-sm bg-white font-bold"
+                            oninput="updatePartDPremium(this.value)">
+                    </div>
+                    <p class="text-[10px] text-teal-600 mt-2 italic font-medium">Record the monthly base premium cost of the plan you selected.</p>
                 </div>
-                <div id="drugListItems" class="space-y-2 mb-4"></div>
-                <div class="border-t pt-4 flex justify-between items-center"><span class="font-bold text-gray-600">Monthly Total:</span><span id="totalMonthlyDrugCost" class="text-3xl font-black text-teal-600">$0.00</span></div>
+
+                <div class="space-y-4">
+                    <label class="block text-xs font-black text-gray-500 uppercase">Add Individual Medications (Copays)</label>
+                    <div class="flex gap-2 no-print">
+                        <input type="text" id="drugName" placeholder="Drug Name" class="flex-1 p-4 border rounded-xl outline-none text-sm bg-gray-50">
+                        <input type="number" id="drugCost" placeholder="$" class="w-24 p-4 border rounded-xl outline-none text-sm bg-gray-50 text-center">
+                        <button onclick="addDrug()" class="bg-teal-600 text-white px-6 rounded-xl font-black hover:bg-teal-700">+</button>
+                    </div>
+                    <div id="drugListItems" class="space-y-2 mb-4"></div>
+                    <div class="border-t pt-4 flex justify-between items-center text-sm">
+                        <span class="font-bold text-gray-600">Total Monthly Copays:</span>
+                        <span id="totalMonthlyDrugCost" class="text-xl font-black text-teal-600">$0.00</span>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -283,8 +301,15 @@
                             <td class="px-6 py-4">$50.00+</td>
                             <td class="px-6 py-4">$0.00</td>
                         </tr>
+                        <!-- New Row for Part D Premium -->
                         <tr>
-                            <td class="px-6 py-4 font-bold bg-gray-50/50">Monthly Scripts (Part D)</td>
+                            <td class="px-6 py-4 font-bold bg-gray-50/50">Monthly Part D Premium</td>
+                            <td class="px-6 py-4 font-bold text-blue-600" id="summaryPartDPremium_G">$0.00</td>
+                            <td class="px-6 py-4 font-bold text-blue-600" id="summaryPartDPremium_HDG">$0.00</td>
+                            <td class="px-6 py-4 font-bold text-blue-600" id="summaryPartDPremium_Adv">$0.00</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-bold bg-gray-50/50">Monthly Scripts (Copays)</td>
                             <td class="px-6 py-4 font-bold text-teal-600" id="summaryPartD_G">$0.00</td>
                             <td class="px-6 py-4 font-bold text-teal-600" id="summaryPartD_HDG">$0.00</td>
                             <td class="px-6 py-4 font-bold text-teal-600" id="summaryPartD_Adv">$0.00</td>
@@ -368,8 +393,9 @@
             const { db, appId, addDoc, collection, serverTimestamp } = window.fb;
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'client_records'), { 
                 clientName: name, 
+                partDPremium: userPartDPremium,
                 drugs: userDrugs, 
-                totalMonthlyCost: userDrugs.reduce((a, b) => a + b.cost, 0), 
+                totalMonthlyCost: userDrugs.reduce((a, b) => a + b.cost, 0) + userPartDPremium, 
                 timestamp: serverTimestamp() 
             });
             alert("Success! Record synced to Agent Dashboard.");
@@ -386,7 +412,7 @@
             snap.docs.forEach(doc => {
                 const d = doc.data();
                 const row = document.createElement('tr');
-                row.innerHTML = `<td class="px-6 py-4 text-sm font-bold text-gray-900">${d.clientName}</td><td class="px-6 py-4 font-black text-teal-600">$${(d.totalMonthlyCost || 0).toFixed(2)}</td><td class="px-6 py-4 text-xs text-gray-400">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td><td class="px-6 py-4 text-blue-600 underline cursor-pointer" onclick='alert("Meds: ${d.drugs ? d.drugs.map(m=>m.name).join(", ") : "None"}")'>View Meds</td>`;
+                row.innerHTML = `<td class="px-6 py-4 text-sm font-bold text-gray-900">${d.clientName}</td><td class="px-6 py-4 font-black text-teal-600">$${(d.totalMonthlyCost || 0).toFixed(2)}</td><td class="px-6 py-4 text-xs text-gray-400">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td><td class="px-6 py-4 text-blue-600 underline cursor-pointer" onclick='alert("Meds: ${d.drugs ? d.drugs.map(m=>m.name).join(", ") : "None"}\\nPart D Premium: $${(d.partDPremium || 0).toFixed(2)}")'>View Meds</td>`;
                 tbody.appendChild(row);
             });
         });
@@ -414,7 +440,7 @@
         const resDiv = document.getElementById('advisorResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Thinking...`;
-        const sys = `Expert Advisor. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Compare to AARP Standard G. Mention Shead Group Advisor consultation.`;
+        const sys = `Expert Advisor. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Compare to AARP Standard G. Mention Shead Group Advisor consultation.`;
         const text = await callGemini(document.getElementById('advisorInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
@@ -428,7 +454,16 @@
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
 
+    // --- DATA VAULT ---
     let userDrugs = JSON.parse(localStorage.getItem('medicareDrugs')) || [];
+    let userPartDPremium = parseFloat(localStorage.getItem('medicarePartDPremium')) || 0;
+
+    function updatePartDPremium(val) {
+        userPartDPremium = parseFloat(val) || 0;
+        localStorage.setItem('medicarePartDPremium', userPartDPremium);
+        renderDrugList();
+    }
+
     function addDrug() {
         const name = document.getElementById('drugName').value.trim();
         const cost = parseFloat(document.getElementById('drugCost').value);
@@ -439,12 +474,23 @@
         saveAndRender();
     }
     function removeDrug(id) { userDrugs = userDrugs.filter(d => d.id !== id); saveAndRender(); }
-    function saveAndRender() { localStorage.setItem('medicareDrugs', JSON.stringify(userDrugs)); renderDrugList(); }
+    function saveAndRender() { 
+        localStorage.setItem('medicareDrugs', JSON.stringify(userDrugs)); 
+        renderDrugList(); 
+    }
     
     function renderDrugList() {
         const container = document.getElementById('drugListItems');
         const totalDisp = document.getElementById('totalMonthlyDrugCost');
+        const premiumInput = document.getElementById('partDPremiumInput');
+        
         if(!container) return;
+        
+        // Sync premium input if needed
+        if (premiumInput && premiumInput.value === "") {
+            premiumInput.value = userPartDPremium || "";
+        }
+
         container.innerHTML = ''; 
         let sum = 0;
         userDrugs.forEach(d => {
@@ -456,6 +502,10 @@
         totalDisp.innerText = `$${sum.toFixed(2)}`;
 
         // Update Summary Table dynamic fields
+        const sPartDPrem_G = document.getElementById('summaryPartDPremium_G');
+        const sPartDPrem_HDG = document.getElementById('summaryPartDPremium_HDG');
+        const sPartDPrem_Adv = document.getElementById('summaryPartDPremium_Adv');
+
         const sPartD_G = document.getElementById('summaryPartD_G');
         const sPartD_HDG = document.getElementById('summaryPartD_HDG');
         const sPartD_Adv = document.getElementById('summaryPartD_Adv');
@@ -465,23 +515,46 @@
         const sTotal_Adv = document.getElementById('summaryTotal_Adv');
 
         if (sPartD_G) {
+            // Update Plan Premiums
+            sPartDPrem_G.innerText = `$${userPartDPremium.toFixed(2)}`;
+            sPartDPrem_HDG.innerText = `$${userPartDPremium.toFixed(2)}`;
+            sPartDPrem_Adv.innerText = `$${userPartDPremium.toFixed(2)}`;
+
+            // Update Copays
             sPartD_G.innerText = `$${sum.toFixed(2)}`;
             sPartD_HDG.innerText = `$${sum.toFixed(2)}`;
             sPartD_Adv.innerText = `$${sum.toFixed(2)}`;
 
-            // Totals: (Part B + Supp/Adv Floor) + Script Sum
-            sTotal_G.innerText = `$${(357.90 + sum).toFixed(2)}+`;
-            sTotal_HDG.innerText = `$${(252.90 + sum).toFixed(2)}+`;
-            sTotal_Adv.innerText = `$${(202.90 + sum).toFixed(2)}`;
+            // Totals: (Part B + Supp/Adv Floor) + Script Sum + Plan Premium
+            sTotal_G.innerText = `$${(357.90 + sum + userPartDPremium).toFixed(2)}+`;
+            sTotal_HDG.innerText = `$${(252.90 + sum + userPartDPremium).toFixed(2)}+`;
+            sTotal_Adv.innerText = `$${(202.90 + sum + userPartDPremium).toFixed(2)}`;
         }
     }
 
     function exportData() { 
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userDrugs)); 
+        const data = {
+            drugs: userDrugs,
+            partDPremium: userPartDPremium
+        };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); 
         const dl = document.createElement('a'); 
         dl.setAttribute("href", dataStr); 
         dl.setAttribute("download", "Medicare_Record_2026.json"); 
         dl.click(); 
+    }
+
+    function importData(e) {
+        const reader = new FileReader();
+        reader.onload = (ev) => { 
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (data.drugs) userDrugs = data.drugs;
+                if (data.partDPremium !== undefined) userPartDPremium = data.partDPremium;
+                saveAndRender(); 
+            } catch (err) { alert("Invalid file format."); }
+        };
+        reader.readAsText(e.target.files[0]);
     }
 
     function initCharts() {
