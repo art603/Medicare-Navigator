@@ -355,7 +355,7 @@
     const partB = "-xlPGnXgUkg_YZYbM"; // Second half of Gemini Key
     const apiKey = partA + partB;
 
-    const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-1.5-flash-lastest";
+    const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-1.5-flash";
 
     function checkLogin() {
         const input = document.getElementById('passInput').value.trim();
@@ -437,7 +437,7 @@
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey) return "AI Key missing. Paste your key in scripts.";
         
-        // FIXED: Using v1beta endpoint and the supported preview model for this environment
+        // FIXED: Using v1beta endpoint and standard 1.5-flash model
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
         const payload = {
