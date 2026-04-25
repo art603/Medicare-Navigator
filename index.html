@@ -157,7 +157,7 @@
         <!-- 3. Drug Tracker -->
         <section id="part-d" class="grid grid-cols-1 lg:grid-cols-2 gap-8 scroll-mt-24">
             <div class="card bg-teal-50 border-teal-200 flex flex-col justify-center text-center p-8">
-                <h3 class="text-2xl font-black text-teal-900 mb-4 uppercase tracking-widest">Drug Plan Finder</h3>
+                <h3 class="text-2xl font-black text-teal-900 mb-4 uppercase tracking-widest font-black">Drug Plan Finder</h3>
                 <p class="text-teal-800 text-sm mb-8 leading-relaxed font-bold">Login to Medicare.gov to get your plan's monthly "Premium + Copay" total, then record them to the right.</p>
                 <a href="https://www.medicare.gov/plan-compare/" target="_blank" class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-transform hover:scale-[1.02] active:scale-95">Launch Medicare.gov Finder &#8599;</a>
             </div>
@@ -199,7 +199,7 @@
                     <button onclick="getAdvisorRecommendation()" id="advisorBtn" 
                         class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-xl transition-all">Analyze ✨ Needs</button>
                 </div>
-                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-medium"></div>
+                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-bold"></div>
             </div>
         </section>
 
@@ -228,7 +228,7 @@
 
         <!-- 7. Bridging logic -->
         <section id="gap-detail" class="scroll-mt-24">
-            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest font-black">How the Synergy Strategy Works</h2>
+            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center uppercase tracking-widest font-black">How the Synergy Strategy Works</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
                 <div class="card border-l-8 border-teal-500 p-8 shadow-lg">
                     <h3 class="text-2xl font-black text-teal-900 mb-4 uppercase">1. Responsibility (UA HDG)</h3>
@@ -282,10 +282,10 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Strategic Design</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-blue-600 uppercase tracking-widest">AARP Plan G</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-teal-600 uppercase tracking-widest">UA High-Ded G</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-orange-600 uppercase tracking-widest">AARP Advantage</th>
+                            <th class="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Strategic Design</th>
+                            <th class="px-6 py-4 text-left text-xs font-black text-blue-600 uppercase tracking-widest">AARP Plan G</th>
+                            <th class="px-6 py-4 text-left text-xs font-black text-teal-600 uppercase tracking-widest">UA High-Ded G</th>
+                            <th class="px-6 py-4 text-left text-xs font-black text-orange-600 uppercase tracking-widest">AARP Advantage</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 text-sm font-bold">
@@ -355,7 +355,7 @@
     const partB = "-xlPGnXgUkg_YZYbM"; // Second half of Gemini Key
     const apiKey = partA + partB;
 
-    const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-1.5-flash";
+    const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-2.5-flash-preview-09-2025";
 
     function checkLogin() {
         const input = document.getElementById('passInput').value.trim();
@@ -400,7 +400,7 @@
     }
 
     async function syncToCloud() {
-        if (!window.fb || window.fb.disabled) { alert("Note: Local saving is the primary method on this host. Use 'Save Locally' to download a record."); return; }
+        if (!window.fb || window.fb.disabled) { alert("Note: Local saving only on this host. Use 'Save Locally' to download a record."); return; }
         const name = document.getElementById('clientName').value.trim();
         if (!name) { alert("Please enter client name in the header first."); return; }
         const btn = document.getElementById('syncBtn');
@@ -437,7 +437,7 @@
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey) return "AI Key missing. Paste your key in scripts.";
         
-        // FIXED: Using v1beta endpoint for proper system_instruction support
+        // FIXED: Using v1beta endpoint and the supported preview model for this environment
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
         const payload = {
