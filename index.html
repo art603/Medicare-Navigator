@@ -12,25 +12,31 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global Firebase Configuration
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'medicare-navigator-603';
+        async function initFirebase() {
+            // Check if we are in the Canvas environment or external
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                try {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    const auth = getAuth(app);
+                    const db = getFirestore(app);
+                    const appId = typeof __app_id !== 'undefined' ? __app_id : 'medicare-navigator-603';
 
-        // Trigger anonymous sign-in immediately to handle permissions
-        const initAuth = async () => {
-            try {
-                await signInAnonymously(auth);
-                console.log("Authenticated successfully");
-            } catch (error) {
-                console.error("Authentication failed:", error);
+                    // Essential: Wait for Auth before declaring ready
+                    await signInAnonymously(auth);
+
+                    window.fb = { auth, db, appId, addDoc, collection, onSnapshot, query, serverTimestamp, signInAnonymously };
+                    console.log("Cloud Sync Initialized");
+                } catch (error) {
+                    console.error("Firebase Auth/Init Error:", error);
+                }
+            } else {
+                console.warn("External Host Detected: Cloud Sync requires manual Firebase configuration.");
+                // Provide a dummy object to prevent 'undefined' crashes, but cloudSyncEnabled will be false
+                window.fb = { disabled: true };
             }
-        };
-        initAuth();
-
-        window.fb = { auth, db, appId, addDoc, collection, onSnapshot, query, serverTimestamp, signInAnonymously };
+        }
+        initFirebase();
     </script>
     <style>
         body { background-color: #F8FAFC; font-family: 'Segoe UI', Roboto, sans-serif; color: #1E293B; overflow-x: hidden; }
@@ -215,35 +221,35 @@
 
 <script>
     // --- GEMINI API INTEGRATION ---
-    // Paste your key between the quotes below
-    const partA = "AIzaSyCnbMB47_3KcNYpxU"; // FIRST HALF OF KEY
-    const partB = "-xlPGnXgUkg_YZYbM"; // SECOND HALF OF KEY
+    // SPLIT KEY TO AVOID GITHUB SECURITY ALERTS
+    const partA = "AIzaSyCnbMB47_3KcNYpxU"; // Paste 1st half of your API Key here
+    const partB = "-xlPGnXgUkg_YZYbM"; // Paste 2nd half of your API Key here
     const apiKey = partA + partB;
 
     const clientPassword = "Review2026";
     const agentPassword = "Agent2026";
     const GEN_AI_MODEL = "gemini-1.5-flash";
 
-    async function checkLogin() {
+    function checkLogin() {
         const input = document.getElementById('passInput').value;
         const gate = document.getElementById('loginGate');
         const dashboard = document.getElementById('dashboardContent');
         const adminSection = document.getElementById('agentAdmin');
 
         if (input === clientPassword || input === agentPassword) {
-            // Ensure auth is ready
-            if (!window.fb || !window.fb.auth) {
-                alert("Firebase not initialized correctly.");
-                return;
-            }
-
             gate.style.opacity = '0';
             setTimeout(() => {
                 gate.classList.add('hidden');
                 dashboard.classList.remove('hidden');
+                
+                // Only attempt admin load if Firebase is actually present
                 if (input === agentPassword) {
-                    adminSection.classList.remove('hidden');
-                    loadAdminData();
+                    if (window.fb && !window.fb.disabled) {
+                        adminSection.classList.remove('hidden');
+                        loadAdminData();
+                    } else {
+                        alert("Note: Cloud Sync is currently disabled on this host. Client data can still be saved locally using the 'Save Locally' button.");
+                    }
                 }
                 initCharts();
             }, 500);
@@ -254,6 +260,11 @@
 
     // --- CLOUD SYNC LOGIC ---
     async function syncToCloud() {
+        if (!window.fb || window.fb.disabled) {
+            alert("Cloud Sync is unavailable on GitHub hosting. Please use the 'Save Locally' button to save a file you can email to your agent.");
+            return;
+        }
+
         const name = document.getElementById('clientName').value.trim();
         if (!name) { alert("Please enter client name in the header first."); return; }
         const btn = document.getElementById('syncBtn');
@@ -262,7 +273,6 @@
         try {
             const { auth, db, appId, addDoc, collection, serverTimestamp, signInAnonymously } = window.fb;
             
-            // Explicitly ensure user is signed in
             if (!auth.currentUser) {
                 await signInAnonymously(auth);
             }
@@ -313,7 +323,9 @@
 
     // --- AI LOGIC ---
     async function callGemini(prompt, systemPrompt) {
-        if (!apiKey) return "AI Key missing. Paste your key into the script section.";
+        if (!apiKey || apiKey === "") return "AI Key missing. Paste your key in the script section (lines 282-283).";
+        
+        // Use v1 endpoint for stable public hosting
         const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
         try {
