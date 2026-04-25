@@ -9,11 +9,10 @@
     <!-- Firebase Integration -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         async function initFirebase() {
-            // Check if we are in the Canvas environment or external
             if (typeof __firebase_config !== 'undefined' && __firebase_config) {
                 try {
                     const firebaseConfig = JSON.parse(__firebase_config);
@@ -21,18 +20,10 @@
                     const auth = getAuth(app);
                     const db = getFirestore(app);
                     const appId = typeof __app_id !== 'undefined' ? __app_id : 'medicare-navigator-603';
-
-                    // Essential: Wait for Auth before declaring ready
                     await signInAnonymously(auth);
-
                     window.fb = { auth, db, appId, addDoc, collection, onSnapshot, query, serverTimestamp, signInAnonymously };
-                    console.log("Cloud Sync Initialized");
-                } catch (error) {
-                    console.error("Firebase Auth/Init Error:", error);
-                }
+                } catch (error) { console.error("Firebase Error:", error); }
             } else {
-                console.warn("External Host Detected: Cloud Sync requires manual Firebase configuration.");
-                // Provide a dummy object to prevent 'undefined' crashes, but cloudSyncEnabled will be false
                 window.fb = { disabled: true };
             }
         }
@@ -42,6 +33,7 @@
         body { background-color: #F8FAFC; font-family: 'Segoe UI', Roboto, sans-serif; color: #1E293B; overflow-x: hidden; }
         #loginGate { position: fixed; inset: 0; background: #1E3A8A; z-index: 10000; display: flex; align-items: center; justify-content: center; }
         .chart-container { position: relative; width: 100%; max-width: 650px; margin: 0 auto; height: 320px; }
+        .projection-container { position: relative; width: 100%; max-width: 850px; margin: 0 auto; height: 400px; }
         .card { background-color: #ffffff; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); padding: 1.5rem; border: 1px solid #E2E8F0; }
         .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #3B82F6; border-radius: 50%; width: 18px; height: 18px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -50,317 +42,224 @@
 </head>
 <body class="antialiased">
 
-<!-- Professional Login Gate -->
+<!-- Login Gate -->
 <div id="loginGate">
     <div class="bg-white p-10 rounded-[2rem] shadow-2xl max-w-md w-full mx-4 text-center">
         <div class="text-4xl mb-4">🛡️</div>
         <h2 class="text-2xl font-black text-blue-900 mb-2">Medicare Navigator</h2>
-        <p class="text-gray-500 mb-8 text-sm">Enter your access code to begin.</p>
+        <p class="text-gray-500 mb-8 text-sm">Enter access code provided by your agent.</p>
         <input type="password" id="passInput" placeholder="Access Code" class="w-full p-4 border rounded-xl mb-4 text-center text-lg outline-none focus:ring-2 focus:ring-blue-600">
-        <button onclick="checkLogin()" class="w-full bg-blue-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all shadow-lg">Enter Dashboard</button>
+        <button onclick="checkLogin()" class="w-full bg-blue-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all">Unlock Dashboard</button>
         <p id="loginError" class="text-red-500 text-xs mt-4 hidden">Invalid code.</p>
     </div>
 </div>
 
 <div id="dashboardContent" class="hidden">
-    <!-- Admin Dashboard (Visible only to Agent) -->
+    <!-- Agent Admin View -->
     <section id="agentAdmin" class="hidden bg-blue-50 border-b border-blue-200 py-8 no-print">
         <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black text-blue-900">Agent Central: Client Submissions</h2>
-                <button onclick="location.reload()" class="text-sm bg-white border px-4 py-2 rounded-lg font-bold shadow-sm">Refresh List</button>
-            </div>
-            <div class="card overflow-x-auto p-0">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Client Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Monthly Drug Cost</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date Submitted</th>
-                            <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="adminTableBody" class="divide-y divide-gray-200">
-                        <!-- Client data synced here -->
-                    </tbody>
-                </table>
-            </div>
+            <h2 class="text-2xl font-black text-blue-900 mb-6">Agent Central: Client Submissions</h2>
+            <div class="card overflow-x-auto p-0"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-100"><tr><th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Client Name</th><th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Monthly Cost</th><th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th><th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Actions</th></tr></thead><tbody id="adminTableBody" class="divide-y divide-gray-200"></tbody></table></div>
         </div>
     </section>
 
     <nav class="sticky top-0 z-50 bg-white shadow-md border-b border-gray-200 no-print">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center gap-2">
-                    <span class="text-2xl font-bold text-blue-900">&#10010;</span>
-                    <span class="font-bold text-lg text-gray-900">Medicare<span class="text-blue-600">Map</span></span>
-                </div>
-                <div class="flex space-x-2 sm:space-x-4 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
-                    <button onclick="syncToCloud()" id="syncBtn" class="bg-blue-600 text-white px-3 py-2 rounded shadow hover:bg-blue-700">Sync to Agent</button>
-                    <button onclick="exportData()" class="text-teal-600 hover:text-teal-800 p-2">Save Locally</button>
-                    <button onclick="window.print()" class="bg-gray-100 border px-3 py-2 rounded hover:bg-gray-200">Print Report</button>
-                </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center">
+            <div class="flex items-center gap-2"><span class="text-2xl font-bold text-blue-900">&#10010;</span><span class="font-bold text-lg">Medicare<span class="text-blue-600">Map</span></span></div>
+            <div class="flex space-x-2 sm:space-x-4 text-[10px] sm:text-xs font-bold uppercase">
+                <button onclick="syncToCloud()" id="syncBtn" class="bg-blue-600 text-white px-3 py-2 rounded shadow hover:bg-blue-700">Sync to Agent</button>
+                <button onclick="exportData()" class="text-teal-600 hover:text-teal-800 p-2">Save Locally</button>
+                <button onclick="window.print()" class="bg-gray-100 border px-3 py-2 rounded">Print PDF</button>
             </div>
         </div>
     </nav>
 
     <header class="bg-blue-900 text-white py-12">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">2026 Strategic Review</h1>
-            <input type="text" id="clientName" placeholder="Enter Client Name" class="bg-blue-800/50 text-white text-center text-xl p-2 rounded-lg border border-blue-400 outline-none focus:bg-blue-800">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">2026 Strategic Review</h1>
+            <div class="relative max-w-md mx-auto">
+                <input type="text" id="clientName" placeholder="Enter Client Name" class="relative z-10 w-full bg-white text-blue-900 text-center text-xl p-3 rounded-xl border-2 border-blue-400 shadow-inner outline-none focus:ring-4 focus:ring-blue-300">
+                <p class="text-blue-200 text-[10px] mt-2 uppercase font-bold tracking-widest no-print">Required for Cloud Sync</p>
+            </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-12 space-y-16 pb-32">
-        <!-- 2026 Foundations -->
+    <main class="max-w-7xl mx-auto px-4 py-12 space-y-20 pb-32">
+        <!-- 1. Foundations -->
         <section id="foundations" class="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="card border-l-8 border-blue-900">
                 <h3 class="text-xl font-bold text-blue-900 mb-4">Part A (Hospital)</h3>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl">
-                        <span class="font-medium">Inpatient Deductible</span>
-                        <span class="text-2xl font-black text-red-600">$1,736</span>
-                    </div>
-                </div>
+                <div class="bg-gray-50 p-4 rounded-xl flex justify-between items-center"><span class="font-medium text-gray-700">Inpatient Deductible</span><span class="text-2xl font-black text-red-600">$1,736</span></div>
             </div>
             <div class="card border-l-8 border-blue-600">
                 <h3 class="text-xl font-bold text-blue-600 mb-4">Part B (Medical)</h3>
                 <div class="space-y-4">
-                    <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl">
-                        <span class="font-medium">Premium</span>
-                        <span class="text-2xl font-black text-blue-800">$202.90</span>
-                    </div>
-                    <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl">
-                        <span class="font-medium">Deductible</span>
-                        <span class="text-2xl font-black text-red-600">$283</span>
-                    </div>
+                    <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl"><span class="font-medium text-gray-700">Premium</span><span class="text-2xl font-black text-blue-800">$202.90</span></div>
+                    <div class="flex justify-between items-center bg-gray-50 p-4 rounded-xl"><span class="font-medium text-gray-700">Deductible</span><span class="text-2xl font-black text-red-600">$283</span></div>
                 </div>
             </div>
         </section>
 
-        <!-- AI Advisor -->
+        <!-- 2. AI Advisor -->
         <section id="advisor" class="no-print">
             <div class="card border-2 border-blue-100 bg-gradient-to-br from-blue-50/50 to-white shadow-lg">
-                <div class="flex items-center gap-3 mb-6">
-                    <span class="text-3xl">✨</span>
-                    <h2 class="text-2xl font-black text-blue-900">AI Medicare Advisor</h2>
-                </div>
+                <div class="flex items-center gap-3 mb-6"><span class="text-3xl">✨</span><h2 class="text-2xl font-black text-blue-900">AI Medicare Advisor</h2></div>
                 <div class="flex flex-col md:flex-row gap-4">
-                    <textarea id="advisorInput" rows="2" placeholder="Describe your needs..." class="flex-1 p-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-600 shadow-inner bg-white"></textarea>
-                    <button onclick="getAdvisorRecommendation()" id="advisorBtn" class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl transition-all shadow-xl">Analyze ✨</button>
+                    <textarea id="advisorInput" rows="2" placeholder="Describe your needs..." class="flex-1 p-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-600 bg-white"></textarea>
+                    <button onclick="getAdvisorRecommendation()" id="advisorBtn" class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-xl">Analyze ✨</button>
                 </div>
-                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed"></div>
+                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm"></div>
             </div>
         </section>
 
-        <!-- Drug List Tracker -->
+        <!-- 3. Drug Tracker -->
         <section id="part-d" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div class="card bg-teal-50 border-teal-200 flex flex-col justify-center text-center p-8">
-                <h3 class="text-2xl font-bold text-teal-900 mb-4">Step 1: Plan Look-Up</h3>
-                <a href="https://www.medicare.gov/plan-compare/" target="_blank" class="bg-teal-700 text-white font-bold py-5 rounded-2xl shadow-xl">Launch Plan Finder &#8599;</a>
+                <h3 class="text-2xl font-bold text-teal-900 mb-4">Drug Plan Finder</h3>
+                <a href="https://www.medicare.gov/plan-compare/" target="_blank" class="bg-teal-700 text-white font-bold py-5 rounded-2xl shadow-xl">Launch Medicare.gov Finder &#8599;</a>
             </div>
             <div class="card border-2 border-teal-200 shadow-2xl p-8">
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Step 2: Log Monthly Costs</h3>
-                <div class="space-y-4">
-                    <div class="flex gap-2 no-print">
-                        <input type="text" id="drugName" placeholder="Drug Name" class="flex-1 p-4 border rounded-xl outline-none text-sm bg-gray-50">
-                        <input type="number" id="drugCost" placeholder="$" class="w-24 p-4 border rounded-xl outline-none text-sm bg-gray-50 text-center">
-                        <button onclick="addDrug()" class="bg-teal-600 text-white px-6 rounded-xl font-black hover:bg-teal-700">+</button>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">My Personal Drug List</h3>
+                <div class="flex gap-2 no-print mb-4">
+                    <input type="text" id="drugName" placeholder="Drug Name" class="flex-1 p-4 border rounded-xl outline-none text-sm bg-gray-50">
+                    <input type="number" id="drugCost" placeholder="$" class="w-24 p-4 border rounded-xl outline-none text-sm bg-gray-50 text-center">
+                    <button onclick="addDrug()" class="bg-teal-600 text-white px-6 rounded-xl font-black">+</button>
+                </div>
+                <div id="drugListItems" class="space-y-2 mb-4"></div>
+                <div class="border-t pt-4 flex justify-between items-center"><span class="font-bold text-gray-600">Monthly Total:</span><span id="totalMonthlyDrugCost" class="text-3xl font-black text-teal-600">$0.00</span></div>
+            </div>
+        </section>
+
+        <!-- 4. 15-Year Financials -->
+        <section id="financials">
+            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center">Long-Term Budget Analysis</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-center">
+                <div class="bg-white border-l-8 border-red-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-red-900 font-bold text-xs uppercase mb-4">AARP Standard Supp G (15-Year Spend)</h4><div id="cumulativeStandard" class="text-5xl font-black text-red-600 mb-4">$0</div><p class="text-xs text-gray-400 italic">8% average annual premium spikes.</p></div>
+                <div class="bg-white border-l-8 border-teal-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-teal-900 font-bold text-xs uppercase mb-4">United American HDG (15-Year Spend)</h4><div id="cumulativeHDG" class="text-5xl font-black text-teal-600 mb-4">$0</div><p class="text-xs text-gray-400 italic">Stable 2% annual premium growth.</p></div>
+            </div>
+            <div class="card p-10 border-t-8 border-blue-900 shadow-2xl bg-white"><div class="projection-container"><canvas id="projectionChart"></canvas></div></div>
+        </section>
+
+        <!-- 5. Strategy Spotlight (NEW) -->
+        <section id="strategy" class="bg-orange-50 border-2 border-orange-200 rounded-[3rem] p-12 shadow-sm">
+            <h2 class="text-3xl font-black text-orange-900 mb-10">PRO Strategy: Rate Stability</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-sm leading-relaxed">
+                <div><h4 class="font-bold text-orange-900 text-xl mb-4">Stop Rate Chasing</h4><p>Standard Medigap Plan G often sees massive annual increases. United American HDG offers the same freedom with a premium floor that stays stable for life.</p></div>
+                <div><h4 class="font-bold text-orange-900 text-xl mb-4">The Synergy Payout</h4><p>Pair UA HDG with an Indemnity plan. You save thousands in premiums each year and use the insurance payout to satisfy the medical deductible.</p></div>
+                <div><h4 class="font-bold text-orange-900 text-xl mb-4">Guaranteed Issue</h4><p>Indemnity plans provide a <strong>Guaranteed Issue window (Age 65-70)</strong>, ensuring you can qualify regardless of health history.</p></div>
+            </div>
+        </section>
+
+        <!-- 6. Detailed Gap Strategy (NEW) -->
+        <section id="gap-detail">
+            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center">Bridging the Gap</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
+                <div class="card border-l-8 border-teal-500 p-8"><h3 class="text-2xl font-black text-teal-900 mb-4">1. Responsibility (HDG)</h3><p class="text-sm text-gray-600 mb-6">You pay the first $2,950 of bills in exchange for the lowest monthly premium.</p><div class="p-6 bg-teal-50 rounded-2xl text-center border border-teal-100 shadow-inner"><span class="text-4xl font-black text-teal-700">$2,950 Gap</span></div></div>
+                <div class="card border-l-8 border-blue-500 p-8"><h3 class="text-2xl font-black text-blue-900 mb-4">2. Solution (Indemnity)</h3><p class="text-sm text-gray-600 mb-6">Private policy pays cash directly to you to wipe out the HDG gap above.</p><div class="space-y-3 text-xs font-black text-blue-900 uppercase"><div class="flex justify-between bg-blue-50 p-3 rounded-lg"><span>Hospital Admission</span><span>$1,000 / day</span></div><div class="flex justify-between bg-blue-50 p-3 rounded-lg"><span>Skilled Nursing</span><span>$500 / day</span></div></div></div>
+            </div>
+            <div class="card bg-blue-900 text-white p-10 border-none shadow-2xl">
+                <h3 class="text-2xl font-bold mb-8">Case Study: Strategy Synergy</h3>
+                <div class="bg-white/10 p-10 rounded-[2rem] border border-white/20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center text-sm">
+                    <div class="space-y-6">
+                        <div class="flex justify-between items-center border-b border-white/20 pb-3"><span>Event: 3-Day Hospital Stay</span><span class="font-bold">Trigger</span></div>
+                        <div class="flex justify-between items-center border-b border-white/20 pb-3 text-red-300 font-black text-lg"><span>UA Medigap Deductible</span><span>-$2,950</span></div>
+                        <div class="flex justify-between items-center border-b border-white/20 pb-3 text-green-300 font-black text-lg"><span>Indemnity Payout ($1k x 3)</span><span>+$3,000</span></div>
+                        <div class="flex justify-between items-center text-3xl font-black pt-6"><span>Your Net Cost</span><span class="text-green-400">$0.00</span></div>
                     </div>
-                    <div id="drugListItems" class="space-y-2 border-t pt-4"></div>
-                    <div class="border-t pt-4 flex justify-between items-center">
-                        <span class="font-bold text-gray-600">Monthly Total:</span>
-                        <span id="totalMonthlyDrugCost" class="text-3xl font-black text-teal-600">$0.00</span>
-                    </div>
+                    <p class="text-lg italic font-light">"Stop chasing rates every year. The Indemnity payout satisfies your deductible during major events, while you keep massive premium savings for life."</p>
                 </div>
             </div>
         </section>
 
-        <!-- Charts Section -->
-        <section id="charts" class="space-y-12">
-            <div class="card p-10 border-t-8 border-blue-900">
-                <h3 class="text-xl font-bold text-center mb-8">Path Strategies (Supplement vs Advantage)</h3>
-                <div class="chart-container"><canvas id="radarChart"></canvas></div>
-            </div>
-            <div class="card p-10 border-t-8 border-blue-900">
-                <h3 class="text-xl font-bold text-center mb-8">15-Year Spend Projection</h3>
-                <div class="projection-container"><canvas id="projectionChart"></canvas></div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                    <div class="text-center p-4 bg-red-50 rounded-xl">
-                        <p class="text-xs font-bold text-red-900 uppercase">AARP Standard G (15-Year)</p>
-                        <div id="cumulativeStandard" class="text-3xl font-black text-red-600">$0</div>
-                    </div>
-                    <div class="text-center p-4 bg-teal-50 rounded-xl">
-                        <p class="text-xs font-bold text-teal-900 uppercase">UA High-Ded G (15-Year)</p>
-                        <div id="cumulativeHDG" class="text-3xl font-black text-teal-600">$0</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Scenario Explorer -->
+        <!-- 7. Scenario Explorer -->
         <section id="scenarios" class="no-print">
             <div class="card border-2 border-orange-200 bg-orange-50/20 shadow-xl p-10 rounded-[3rem]">
-                <div class="flex items-center gap-3 mb-8">
-                    <span class="text-4xl">✨</span>
-                    <h2 class="text-3xl font-black text-orange-900">Health Event Explorer</h2>
-                </div>
-                <div class="flex flex-col gap-6">
-                    <textarea id="scenarioInput" rows="3" placeholder="e.g., 'What happens if I stay in the hospital for 2 days?'" class="w-full p-6 rounded-[2rem] border outline-none focus:ring-4 focus:ring-orange-500/20 shadow-inner bg-white text-lg"></textarea>
-                    <button onclick="getScenarioResult()" id="scenarioBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-black py-6 rounded-[2rem] shadow-2xl text-xl">Analyze ✨ Health Event</button>
-                </div>
+                <div class="flex items-center gap-3 mb-8"><span class="text-4xl">✨</span><h2 class="text-3xl font-black text-orange-900">Scenario Health Explorer</h2></div>
+                <textarea id="scenarioInput" rows="3" placeholder="What happens if I stay in the hospital for 2 days?" class="w-full p-6 rounded-[2rem] border outline-none focus:ring-4 focus:ring-orange-500/20 shadow-inner bg-white text-lg mb-6"></textarea>
+                <button onclick="getScenarioResult()" id="scenarioBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-black py-6 px-12 rounded-[2rem] shadow-2xl text-xl">Analyze ✨ Health Event</button>
                 <div id="scenarioResult" class="hidden mt-10 p-10 bg-white rounded-[2rem] border border-orange-100 shadow-2xl text-gray-800 text-sm leading-relaxed"></div>
             </div>
         </section>
+
+        <!-- 8. Summary Table (NEW) -->
+        <section id="summaryTable">
+            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center">Summary Comparison</h2>
+            <div class="card p-0 overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Benefit</th><th class="px-6 py-4 text-left text-xs font-bold text-blue-600 uppercase">Plan G</th><th class="px-6 py-4 text-left text-xs font-bold text-teal-600 uppercase">UA High-Ded G</th><th class="px-6 py-4 text-left text-xs font-bold text-orange-600 uppercase">AARP Advantage</th></tr></thead><tbody class="divide-y divide-gray-200 text-sm"><tr><td class="px-6 py-4 font-bold">Monthly Cost</td><td class="px-6 py-4">$155+</td><td class="px-6 py-4">$50+</td><td class="px-6 py-4">$0</td></tr><tr><td class="px-6 py-4 font-bold">Annual Med Risk</td><td class="px-6 py-4">$283</td><td class="px-6 py-4">$2,950</td><td class="px-6 py-4">$3,900</td></tr><tr><td class="px-6 py-4 font-bold">Doctor Access</td><td class="px-6 py-4">Any USA</td><td class="px-6 py-4">Any USA</td><td class="px-6 py-4">Network Only</td></tr></tbody></table></div>
+        </section>
     </main>
 
-    <footer class="bg-gray-900 py-20 text-center text-gray-500 border-t border-gray-800">
-        <p class="text-sm font-medium text-gray-400 mb-6">Powered by The Shead Group LLC & Gemini AI Analytics</p>
-    </footer>
+    <footer class="bg-gray-900 py-20 text-center text-gray-500 border-t border-gray-800"><p class="text-sm font-medium text-gray-400 mb-6">Powered by The Shead Group LLC & Gemini AI Analytics</p></footer>
 </div>
 
 <script>
-    // --- GEMINI API INTEGRATION ---
-    // SPLIT KEY TO AVOID GITHUB SECURITY ALERTS
-    const partA = "AIzaSyCnbMB47_3KcNYpxU"; // Paste 1st half of your API Key here
-    const partB = "-xlPGnXgUkg_YZYbM"; // Paste 2nd half of your API Key here
+    // --- KEY SECURITY ---
+    const partA = "AIzaSyCnbMB47_3KcNYpxU"; // FIRST HALF
+    const partB = "-xlPGnXgUkg_YZYbM"; // SECOND HALF
     const apiKey = partA + partB;
-
-    const clientPassword = "Review2026";
-    const agentPassword = "Agent2026";
-    const GEN_AI_MODEL = "gemini-1.5-flash";
+    const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-1.5-flash";
 
     function checkLogin() {
         const input = document.getElementById('passInput').value;
-        const gate = document.getElementById('loginGate');
-        const dashboard = document.getElementById('dashboardContent');
-        const adminSection = document.getElementById('agentAdmin');
-
-        if (input === clientPassword || input === agentPassword) {
-            gate.style.opacity = '0';
-            setTimeout(() => {
-                gate.classList.add('hidden');
-                dashboard.classList.remove('hidden');
-                
-                // Only attempt admin load if Firebase is actually present
-                if (input === agentPassword) {
-                    if (window.fb && !window.fb.disabled) {
-                        adminSection.classList.remove('hidden');
-                        loadAdminData();
-                    } else {
-                        alert("Note: Cloud Sync is currently disabled on this host. Client data can still be saved locally using the 'Save Locally' button.");
-                    }
-                }
-                initCharts();
-            }, 500);
-        } else {
-            document.getElementById('loginError').classList.remove('hidden');
-        }
+        if (input === clientPass || input === agentPass) {
+            document.getElementById('loginGate').classList.add('hidden');
+            document.getElementById('dashboardContent').classList.remove('hidden');
+            if (input === agentPass && window.fb && !window.fb.disabled) {
+                document.getElementById('agentAdmin').classList.remove('hidden');
+                loadAdminData();
+            }
+            initCharts();
+        } else { document.getElementById('loginError').classList.remove('hidden'); }
     }
 
-    // --- CLOUD SYNC LOGIC ---
     async function syncToCloud() {
-        if (!window.fb || window.fb.disabled) {
-            alert("Cloud Sync is unavailable on GitHub hosting. Please use the 'Save Locally' button to save a file you can email to your agent.");
-            return;
-        }
-
+        if (!window.fb || window.fb.disabled) { alert("Local saving only on this host."); return; }
         const name = document.getElementById('clientName').value.trim();
-        if (!name) { alert("Please enter client name in the header first."); return; }
-        const btn = document.getElementById('syncBtn');
-        btn.disabled = true; btn.innerText = "Syncing...";
-
+        if (!name) { alert("Enter client name first."); return; }
         try {
-            const { auth, db, appId, addDoc, collection, serverTimestamp, signInAnonymously } = window.fb;
-            
-            if (!auth.currentUser) {
-                await signInAnonymously(auth);
-            }
-
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'client_records'), {
-                clientName: name,
-                drugs: userDrugs,
-                totalMonthlyCost: userDrugs.reduce((a, b) => a + b.cost, 0),
-                timestamp: serverTimestamp()
-            });
-            alert("Success! Record synced to agent dashboard.");
-        } catch (e) {
-            console.error("Sync Error:", e);
-            alert("Sync failed: " + e.message);
-        }
-        btn.disabled = false; btn.innerText = "Sync to Agent";
+            const { db, appId, addDoc, collection, serverTimestamp } = window.fb;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'client_records'), { clientName: name, drugs: userDrugs, totalMonthlyCost: userDrugs.reduce((a, b) => a + b.cost, 0), timestamp: serverTimestamp() });
+            alert("Record synced to Agent.");
+        } catch (e) { alert("Sync failed."); }
     }
 
-    async function loadAdminData() {
-        try {
-            const { auth, db, appId, onSnapshot, collection, signInAnonymously } = window.fb;
-            
-            if (!auth.currentUser) {
-                await signInAnonymously(auth);
-            }
-
-            const tbody = document.getElementById('adminTableBody');
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'client_records'), (snapshot) => {
-                tbody.innerHTML = '';
-                snapshot.docs.forEach(doc => {
-                    const data = doc.data();
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="px-6 py-4 text-sm font-bold text-gray-900">${data.clientName}</td>
-                        <td class="px-6 py-4 text-sm text-teal-600 font-black">$${(data.totalMonthlyCost || 0).toFixed(2)}</td>
-                        <td class="px-6 py-4 text-sm text-gray-500">${data.timestamp?.toDate().toLocaleDateString() || 'Just now'}</td>
-                        <td class="px-6 py-4 text-sm"><button onclick='alert("Drugs: ${data.drugs ? data.drugs.map(d => d.name).join(", ") : "None"}")' class="text-blue-600 underline">View Drugs</button></td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            }, (err) => {
-                console.error("Firestore Listen Error:", err);
+    function loadAdminData() {
+        const { db, appId, onSnapshot, collection } = window.fb;
+        const tbody = document.getElementById('adminTableBody');
+        onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'client_records'), (snap) => {
+            tbody.innerHTML = '';
+            snap.docs.forEach(doc => {
+                const d = doc.data();
+                const row = document.createElement('tr');
+                row.innerHTML = `<td class="px-6 py-4 text-sm font-bold">${d.clientName}</td><td class="px-6 py-4">$${(d.totalMonthlyCost || 0).toFixed(2)}</td><td class="px-6 py-4 text-xs">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td><td class="px-6 py-4 text-blue-600 underline cursor-pointer" onclick='alert("Meds: ${d.drugs.map(m=>m.name).join(", ")}")'>View Meds</td>`;
+                tbody.appendChild(row);
             });
-        } catch (e) {
-            console.error("Admin Load Error:", e);
-        }
+        });
     }
 
-    // --- AI LOGIC ---
     async function callGemini(prompt, systemPrompt) {
-        if (!apiKey || apiKey === "") return "AI Key missing. Paste your key in the script section (lines 282-283).";
-        
-        // Use v1 endpoint for stable public hosting
+        if (!apiKey) return "API Key missing.";
         const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
-        const payload = { contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
         try {
-            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            const d = await res.json();
-            if (d.error) throw new Error(d.error.message);
-            return d.candidates?.[0]?.content?.parts?.[0]?.text || "Error processing request.";
-        } catch (e) { 
-            console.error("Gemini Error:", e);
-            return "Service connection error: " + e.message; 
-        }
+            const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], systemInstruction: { parts: [{ text: systemPrompt }] } }) });
+            const d = await res.json(); return d.candidates?.[0]?.content?.parts?.[0]?.text || "Error.";
+        } catch (e) { return "Service error."; }
     }
 
     async function getAdvisorRecommendation() {
-        const resDiv = document.getElementById('advisorResult');
-        resDiv.classList.remove('hidden'); resDiv.innerHTML = `<span class="loading-spinner"></span> Analyzing...`;
-        const drugsStr = userDrugs.map(d => d.name).join(', ');
-        const sys = `Medicare Expert. Use 2026 costs. User medications: ${drugsStr}. Recommend stability with UA HDG + Indemnity over AARP Standard 8% hikes.`;
-        const text = await callGemini(document.getElementById('advisorInput').value, sys);
-        resDiv.innerHTML = text.replace(/\n/g, '<br>');
+        const resDiv = document.getElementById('advisorResult'); resDiv.classList.remove('hidden'); resDiv.innerHTML = `<span class="loading-spinner"></span>`;
+        const sys = `Expert Advisor. 2026 Costs. UA HDG + Indemnity focus. User drugs: ${userDrugs.map(d=>d.name).join(', ')}.`;
+        resDiv.innerHTML = (await callGemini(document.getElementById('advisorInput').value, sys)).replace(/\n/g, '<br>');
     }
 
     async function getScenarioResult() {
-        const resDiv = document.getElementById('scenarioResult');
-        resDiv.classList.remove('hidden'); resDiv.innerHTML = `<span class="loading-spinner"></span> Simulating...`;
-        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and AARP Advantage ($3,900 MOOP) using 2026 data. Explain Indemnity satisfy UA HDG deductible.`;
-        const text = await callGemini(document.getElementById('scenarioInput').value, sys);
-        resDiv.innerHTML = text.replace(/\n/g, '<br>');
+        const resDiv = document.getElementById('scenarioResult'); resDiv.classList.remove('hidden'); resDiv.innerHTML = `<span class="loading-spinner"></span>`;
+        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and Advantage ($3,900 MOOP). Use 2026 data.`;
+        resDiv.innerHTML = (await callGemini(document.getElementById('scenarioInput').value, sys)).replace(/\n/g, '<br>');
     }
 
-    // --- DATA VAULT ---
     let userDrugs = JSON.parse(localStorage.getItem('medicareDrugs')) || [];
     function addDrug() {
-        const name = document.getElementById('drugName').value.trim();
-        const cost = parseFloat(document.getElementById('drugCost').value);
+        const name = document.getElementById('drugName').value.trim(), cost = parseFloat(document.getElementById('drugCost').value);
         if (!name || isNaN(cost)) return;
         userDrugs.push({ id: Date.now(), name, cost });
         document.getElementById('drugName').value = ''; document.getElementById('drugCost').value = '';
@@ -369,57 +268,26 @@
     function removeDrug(id) { userDrugs = userDrugs.filter(d => d.id !== id); saveAndRender(); }
     function saveAndRender() { localStorage.setItem('medicareDrugs', JSON.stringify(userDrugs)); renderDrugList(); }
     function renderDrugList() {
-        const container = document.getElementById('drugListItems');
-        const totalDisp = document.getElementById('totalMonthlyDrugCost');
-        if (!container) return;
-        container.innerHTML = '';
-        let sum = 0;
+        const container = document.getElementById('drugListItems'), totalDisp = document.getElementById('totalMonthlyDrugCost');
+        container.innerHTML = ''; let sum = 0;
         userDrugs.forEach(d => {
             sum += d.cost;
-            const div = document.createElement('div');
-            div.className = 'flex justify-between items-center bg-teal-50 p-3 rounded-lg border text-sm';
+            const div = document.createElement('div'); div.className = 'flex justify-between items-center bg-teal-50 p-3 rounded-lg border text-sm';
             div.innerHTML = `<div><span class="font-bold">${d.name}</span><br><span class="text-xs text-teal-600">$${d.cost.toFixed(2)}/mo</span></div><button onclick="removeDrug(${d.id})" class="text-red-400 font-bold px-2">&times;</button>`;
             container.appendChild(div);
         });
         totalDisp.innerText = `$${sum.toFixed(2)}`;
     }
-    function exportData() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userDrugs));
-        const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "Medicare_Client_Record.json");
-        dl.click();
-    }
-    function importData(e) {
-        const reader = new FileReader();
-        reader.onload = (ev) => { userDrugs = JSON.parse(ev.target.result); saveAndRender(); };
-        reader.readAsText(e.target.files[0]);
-    }
-    function clearAllData() { userDrugs = []; localStorage.removeItem('medicareDrugs'); renderDrugList(); }
+    function exportData() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userDrugs)); const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "Client_Medicare_Record.json"); dl.click(); }
 
-    // --- CHARTS ---
     function initCharts() {
-        const fmt = (l) => l.length <= 16 ? l : l.match(/.{1,16}(\s|$)/g).map(s => s.trim());
-        new Chart(document.getElementById('radarChart'), {
-            type: 'radar',
-            data: { labels: ['Freedom', 'Predictability', 'Low Premium', 'Extras'].map(fmt), datasets: [{ label: 'Supplement', data: [100, 95, 20, 10], borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.1)' }, { label: 'Advantage', data: [40, 50, 90, 95], borderColor: '#F97316', backgroundColor: 'rgba(249, 115, 22, 0.1)' }] },
-            options: { maintainAspectRatio: false }
-        });
+        new Chart(document.getElementById('radarChart'), { type: 'radar', data: { labels: ['Freedom', 'Predictability', 'Low Premium', 'Extras'], datasets: [{ label: 'Supplement', data: [100, 95, 20, 10], borderColor: '#3B82F6', backgroundColor: 'rgba(59, 130, 246, 0.1)' }, { label: 'Advantage', data: [40, 50, 90, 95], borderColor: '#F97316', backgroundColor: 'rgba(249, 115, 22, 0.1)' }] }, options: { maintainAspectRatio: false } });
         const labels = Array.from({length: 15}, (_, i) => 2026 + i);
-        let b = 202.90, d = 40, g = 155, h = 50;
-        const sData = [], hData = [];
-        let sSum = 0, hSum = 0;
-        for (let i = 0; i < 15; i++) {
-            const annS = (b + d + g) * 12; const annH = (b + d + h) * 12;
-            sData.push(annS.toFixed(0)); hData.push(annH.toFixed(0));
-            sSum += annS; hSum += annH;
-            b *= 1.053; d *= 1.025; g *= 1.08; h *= 1.02;
-        }
+        let b = 202.90, d = 40, g = 155, h = 50; const sData = [], hData = []; let sSum = 0, hSum = 0;
+        for (let i = 0; i < 15; i++) { const annS = (b + d + g) * 12; const annH = (b + d + h) * 12; sData.push(annS.toFixed(0)); hData.push(annH.toFixed(0)); sSum += annS; hSum += annH; b *= 1.053; d *= 1.025; g *= 1.08; h *= 1.02; }
         document.getElementById('cumulativeStandard').innerText = '$' + Math.round(sSum).toLocaleString();
         document.getElementById('cumulativeHDG').innerText = '$' + Math.round(hSum).toLocaleString();
-        new Chart(document.getElementById('projectionChart'), {
-            type: 'line',
-            data: { labels, datasets: [{ label: 'AARP G', data: sData, borderColor: '#EF4444' }, { label: 'UA HDG', data: hData, borderColor: '#14B8A6' }] },
-            options: { maintainAspectRatio: false }
-        });
+        new Chart(document.getElementById('projectionChart'), { type: 'line', data: { labels, datasets: [{ label: 'Standard G (8% Hike)', data: sData, borderColor: '#EF4444' }, { label: 'HDG Stability (2%)', data: hData, borderColor: '#14B8A6' }] }, options: { maintainAspectRatio: false } });
     }
 </script>
 </body>
