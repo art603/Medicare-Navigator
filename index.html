@@ -50,7 +50,7 @@
         <p class="text-gray-500 mb-8 text-sm">Enter access code provided by your agent.</p>
         <input type="password" id="passInput" placeholder="Access Code" 
                onkeydown="if(event.key === 'Enter') checkLogin()"
-               class="w-full p-4 border rounded-xl mb-4 text-center text-lg outline-none focus:ring-2 focus:ring-blue-600">
+               class="relative z-10 w-full p-4 border rounded-xl mb-4 text-center text-lg outline-none focus:ring-2 focus:ring-blue-600">
         <button onclick="checkLogin()" class="w-full bg-blue-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all">Unlock Dashboard</button>
         <p id="loginError" class="text-red-500 text-xs mt-4 hidden font-bold">Invalid code. Please contact your agent.</p>
     </div>
@@ -80,10 +80,13 @@
         <div class="max-w-7xl mx-auto px-4 text-center">
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 uppercase">2026 Strategic Review</h1>
             <div class="relative max-w-md mx-auto">
-                <input type="text" id="clientName" placeholder="Enter Client Name" class="relative z-10 w-full bg-white text-blue-900 text-center text-xl p-3 rounded-xl border-2 border-blue-400 shadow-inner outline-none focus:ring-4 focus:ring-blue-300">
-                <p class="text-blue-100 text-xs mt-3 font-medium px-4 leading-relaxed">
-                    Remember to consult with your Shead Group Advisor with the desired recommendation.
-                </p>
+                <input type="text" id="clientName" placeholder="Enter Client Name" 
+                    class="relative z-20 w-full bg-white text-blue-900 text-center text-xl p-3 rounded-xl border-2 border-blue-400 shadow-inner outline-none focus:ring-4 focus:ring-blue-300 transition-all">
+                <div class="bg-blue-800/40 p-3 rounded-xl mt-3 border border-blue-700/50">
+                    <p class="text-blue-100 text-xs font-bold leading-relaxed">
+                        Remember to consult with your Shead Group Advisor with the desired recommendation.
+                    </p>
+                </div>
                 <p class="text-blue-200 text-[10px] mt-2 uppercase font-bold tracking-widest no-print">Required for Cloud Sync</p>
             </div>
         </div>
@@ -153,7 +156,7 @@
         <section id="part-d" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div class="card bg-teal-50 border-teal-200 flex flex-col justify-center text-center p-8">
                 <h3 class="text-2xl font-bold text-teal-900 mb-4 uppercase tracking-widest">Drug Plan Finder</h3>
-                <p class="text-teal-800 text-sm mb-8 leading-relaxed">Login to Medicare.gov to get your plan's monthly "Premium + Copay" total, then record it to the right for your annual report.</p>
+                <p class="text-teal-800 text-sm mb-8 leading-relaxed">Login to Medicare.gov to get your plan's monthly "Premium + Copay" total, then record it to the right for your report.</p>
                 <a href="https://www.medicare.gov/plan-compare/" target="_blank" class="bg-teal-700 text-white font-bold py-5 rounded-2xl shadow-xl transition-transform hover:scale-[1.02]">Launch Medicare.gov Finder &#8599;</a>
             </div>
             <div class="card border-2 border-teal-200 shadow-2xl p-8">
@@ -174,8 +177,10 @@
                 <div class="flex items-center gap-3 mb-6"><span class="text-3xl">✨</span><h2 class="text-2xl font-black text-blue-900 uppercase">TSG Strategy Navigator</h2></div>
                 <p class="text-sm text-gray-600 mb-6 italic">Describe your lifestyle, healthcare issues (including medications) and future health goals.</p>
                 <div class="flex flex-col md:flex-row gap-4">
-                    <textarea id="advisorInput" rows="2" placeholder="Describe your needs..." class="flex-1 p-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-600 bg-white shadow-inner"></textarea>
-                    <button onclick="getAdvisorRecommendation()" id="advisorBtn" class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-xl transition-all">Analyze ✨ Needs</button>
+                    <textarea id="advisorInput" rows="2" placeholder="Describe your needs..." 
+                        class="relative z-10 flex-1 p-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-600 bg-white shadow-inner"></textarea>
+                    <button onclick="getAdvisorRecommendation()" id="advisorBtn" 
+                        class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-xl transition-all">Analyze ✨ Needs</button>
                 </div>
                 <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed"></div>
             </div>
@@ -185,7 +190,7 @@
         <section id="financials">
             <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center">15-Year Cumulative Spend Analysis</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-center">
-                <div class="bg-white border-l-8 border-red-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-red-900 font-bold text-xs uppercase mb-4 tracking-tighter">AARP Standard Supp G (15-Year Projection)</h4><div id="cumulativeStandard" class="text-5xl font-black text-red-600 mb-4">$0</div><p class="text-xs text-gray-400 italic">Includes Part B and average 8% annual premium spikes.</p></div>
+                <div class="bg-white border-l-8 border-red-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-red-900 font-bold text-xs uppercase mb-4 tracking-tighter">AARP Standard Supp G (15-Year Spend Projection)</h4><div id="cumulativeStandard" class="text-5xl font-black text-red-600 mb-4">$0</div><p class="text-xs text-gray-400 italic">Includes Part B and average 8% annual premium spikes.</p></div>
                 <div class="bg-white border-l-8 border-teal-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-teal-900 font-bold text-xs uppercase mb-4 tracking-tighter">United American HDG (15-Year Projection)</h4><div id="cumulativeHDG" class="text-5xl font-black text-teal-600 mb-4">$0</div><p class="text-xs text-gray-400 italic">Includes Part B and stable 2% annual premium growth.</p></div>
             </div>
             <div class="card p-10 border-t-8 border-blue-900 shadow-2xl bg-white text-center">
@@ -244,8 +249,10 @@
         <section id="scenarios" class="no-print">
             <div class="card border-2 border-orange-200 bg-orange-50/20 shadow-xl p-10 rounded-[3rem]">
                 <div class="flex items-center gap-3 mb-8"><span class="text-4xl">✨</span><h2 class="text-3xl font-black text-orange-900 uppercase">Scenario Health Explorer</h2></div>
-                <textarea id="scenarioInput" rows="3" placeholder="e.g., What happens if I stay in the hospital for 2 days and need an MRI?" class="w-full p-6 rounded-[2rem] border outline-none focus:ring-4 focus:ring-orange-500/20 shadow-inner bg-white text-lg mb-6"></textarea>
-                <button onclick="getScenarioResult()" id="scenarioBtn" class="bg-orange-500 hover:bg-orange-600 text-white font-black py-6 px-12 rounded-[2rem] shadow-2xl text-xl transition-all">Analyze ✨ Health Event</button>
+                <textarea id="scenarioInput" rows="3" placeholder="e.g., What happens if I stay in the hospital for 2 days and need an MRI?" 
+                    class="relative z-10 w-full p-6 rounded-[2rem] border outline-none focus:ring-4 focus:ring-orange-500/20 shadow-inner bg-white text-lg mb-6"></textarea>
+                <button onclick="getScenarioResult()" id="scenarioBtn" 
+                    class="bg-orange-500 hover:bg-orange-600 text-white font-black py-6 px-12 rounded-[2rem] shadow-2xl text-xl transition-all">Analyze ✨ Health Event</button>
                 <div id="scenarioResult" class="hidden mt-10 p-10 bg-white rounded-[2rem] border border-orange-100 shadow-2xl text-gray-800 text-sm leading-relaxed"></div>
             </div>
         </section>
@@ -276,11 +283,17 @@
                             <td class="px-6 py-4">$50.00+</td>
                             <td class="px-6 py-4">$0.00</td>
                         </tr>
+                        <tr>
+                            <td class="px-6 py-4 font-bold bg-gray-50/50">Monthly Scripts (Part D)</td>
+                            <td class="px-6 py-4 font-bold text-teal-600" id="summaryPartD_G">$0.00</td>
+                            <td class="px-6 py-4 font-bold text-teal-600" id="summaryPartD_HDG">$0.00</td>
+                            <td class="px-6 py-4 font-bold text-teal-600" id="summaryPartD_Adv">$0.00</td>
+                        </tr>
                         <tr class="bg-blue-50/30">
                             <td class="px-6 py-4 font-black">Total Monthly Floor</td>
-                            <td class="px-6 py-4 font-black text-blue-900">$357.90+</td>
-                            <td class="px-6 py-4 font-black text-teal-700">$252.90+</td>
-                            <td class="px-6 py-4 font-black text-orange-900">$202.90</td>
+                            <td class="px-6 py-4 font-black text-blue-900" id="summaryTotal_G">$357.90+</td>
+                            <td class="px-6 py-4 font-black text-teal-700" id="summaryTotal_HDG">$252.90+</td>
+                            <td class="px-6 py-4 font-black text-orange-900" id="summaryTotal_Adv">$202.90</td>
                         </tr>
                         <tr>
                             <td class="px-6 py-4 font-bold bg-gray-50/50">Annual Med Risk (MOOP)</td>
@@ -330,6 +343,7 @@
             gate.style.opacity = '0';
             setTimeout(() => {
                 gate.classList.add('hidden');
+                gate.style.display = 'none'; // Completely remove from layout
                 dashboard.classList.remove('hidden');
                 try { initCharts(); } catch (e) { console.error("Chart Error:", e); }
                 if (input === agentPass && window.fb && !window.fb.disabled) {
@@ -337,6 +351,7 @@
                     loadAdminData();
                 }
                 window.scrollTo(0,0);
+                renderDrugList(); // Sync summary table immediately
             }, 400);
         } else {
             err.classList.remove('hidden');
@@ -399,7 +414,7 @@
         const resDiv = document.getElementById('advisorResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Thinking...`;
-        const sys = `Expert Advisor. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Compare to AARP Standard G. Mention Shead Group consultation.`;
+        const sys = `Expert Advisor. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Compare to AARP Standard G. Mention Shead Group Advisor consultation.`;
         const text = await callGemini(document.getElementById('advisorInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
@@ -408,7 +423,7 @@
         const resDiv = document.getElementById('scenarioResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Simulating...`;
-        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and Advantage ($3,900 MOOP) using 2026 data. Show how $1k/day hospital indemnity zero-out the UA HDG gap.`;
+        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and Advantage ($3,900 MOOP) using 2026 data. Explain how $1k/day hospital indemnity zero-out the UA HDG gap.`;
         const text = await callGemini(document.getElementById('scenarioInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
@@ -425,11 +440,13 @@
     }
     function removeDrug(id) { userDrugs = userDrugs.filter(d => d.id !== id); saveAndRender(); }
     function saveAndRender() { localStorage.setItem('medicareDrugs', JSON.stringify(userDrugs)); renderDrugList(); }
+    
     function renderDrugList() {
         const container = document.getElementById('drugListItems');
         const totalDisp = document.getElementById('totalMonthlyDrugCost');
         if(!container) return;
-        container.innerHTML = ''; let sum = 0;
+        container.innerHTML = ''; 
+        let sum = 0;
         userDrugs.forEach(d => {
             sum += d.cost;
             const div = document.createElement('div'); div.className = 'flex justify-between items-center bg-teal-50 p-3 rounded-lg border text-sm';
@@ -437,7 +454,28 @@
             container.appendChild(div);
         });
         totalDisp.innerText = `$${sum.toFixed(2)}`;
+
+        // Update Summary Table dynamic fields
+        const sPartD_G = document.getElementById('summaryPartD_G');
+        const sPartD_HDG = document.getElementById('summaryPartD_HDG');
+        const sPartD_Adv = document.getElementById('summaryPartD_Adv');
+        
+        const sTotal_G = document.getElementById('summaryTotal_G');
+        const sTotal_HDG = document.getElementById('summaryTotal_HDG');
+        const sTotal_Adv = document.getElementById('summaryTotal_Adv');
+
+        if (sPartD_G) {
+            sPartD_G.innerText = `$${sum.toFixed(2)}`;
+            sPartD_HDG.innerText = `$${sum.toFixed(2)}`;
+            sPartD_Adv.innerText = `$${sum.toFixed(2)}`;
+
+            // Totals: (Part B + Supp/Adv Floor) + Script Sum
+            sTotal_G.innerText = `$${(357.90 + sum).toFixed(2)}+`;
+            sTotal_HDG.innerText = `$${(252.90 + sum).toFixed(2)}+`;
+            sTotal_Adv.innerText = `$${(202.90 + sum).toFixed(2)}`;
+        }
     }
+
     function exportData() { 
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userDrugs)); 
         const dl = document.createElement('a'); 
@@ -471,8 +509,10 @@
             sSum += annS; hSum += annH; 
             b *= 1.053; d *= 1.025; g *= 1.08; h *= 1.02; 
         }
-        document.getElementById('cumulativeStandard').innerText = '$' + Math.round(sSum).toLocaleString();
-        document.getElementById('cumulativeHDG').innerText = '$' + Math.round(hSum).toLocaleString();
+        const cS = document.getElementById('cumulativeStandard');
+        const cH = document.getElementById('cumulativeHDG');
+        if (cS) cS.innerText = '$' + Math.round(sSum).toLocaleString();
+        if (cH) cH.innerText = '$' + Math.round(hSum).toLocaleString();
         
         new Chart(document.getElementById('projectionChart'), { 
             type: 'line', 
