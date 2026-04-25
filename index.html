@@ -81,6 +81,9 @@
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 uppercase">2026 Strategic Review</h1>
             <div class="relative max-w-md mx-auto">
                 <input type="text" id="clientName" placeholder="Enter Client Name" class="relative z-10 w-full bg-white text-blue-900 text-center text-xl p-3 rounded-xl border-2 border-blue-400 shadow-inner outline-none focus:ring-4 focus:ring-blue-300">
+                <p class="text-blue-100 text-xs mt-3 font-medium px-4 leading-relaxed">
+                    Remember to consult with your Shead Group Advisor with the desired recommendation.
+                </p>
                 <p class="text-blue-200 text-[10px] mt-2 uppercase font-bold tracking-widest no-print">Required for Cloud Sync</p>
             </div>
         </div>
@@ -165,13 +168,13 @@
             </div>
         </section>
 
-        <!-- 4. AI Navigator -->
+        <!-- 4. TSG Strategy Navigator -->
         <section id="advisor" class="no-print">
             <div class="card border-2 border-blue-100 bg-gradient-to-br from-blue-50/50 to-white shadow-lg">
-                <div class="flex items-center gap-3 mb-6"><span class="text-3xl">✨</span><h2 class="text-2xl font-black text-blue-900 uppercase">AI Strategy Navigator</h2></div>
-                <p class="text-sm text-gray-600 mb-6 italic">Describe your lifestyle and health goals for a customized design recommendation.</p>
+                <div class="flex items-center gap-3 mb-6"><span class="text-3xl">✨</span><h2 class="text-2xl font-black text-blue-900 uppercase">TSG Strategy Navigator</h2></div>
+                <p class="text-sm text-gray-600 mb-6 italic">Describe your lifestyle, healthcare issues (including medications) and future health goals.</p>
                 <div class="flex flex-col md:flex-row gap-4">
-                    <textarea id="advisorInput" rows="2" placeholder="e.g., 'I travel out of state frequently and want total choice...'" class="flex-1 p-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-600 bg-white shadow-inner"></textarea>
+                    <textarea id="advisorInput" rows="2" placeholder="Describe your needs..." class="flex-1 p-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-600 bg-white shadow-inner"></textarea>
                     <button onclick="getAdvisorRecommendation()" id="advisorBtn" class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-xl transition-all">Analyze ✨ Needs</button>
                 </div>
                 <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed"></div>
@@ -439,7 +442,7 @@
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userDrugs)); 
         const dl = document.createElement('a'); 
         dl.setAttribute("href", dataStr); 
-        dl.setAttribute("download", "Medicare_Client_Record_2026.json"); 
+        dl.setAttribute("download", "Medicare_Record_2026.json"); 
         dl.click(); 
     }
 
