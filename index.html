@@ -44,13 +44,13 @@
 
 <!-- Login Gate -->
 <div id="loginGate">
-    <div class="bg-white p-10 rounded-[2rem] shadow-2xl max-w-md w-full mx-4 text-center">
+    <div class="bg-white p-10 rounded-[2rem] shadow-2xl max-w-md w-full mx-4 text-center border border-gray-100">
         <div class="text-4xl mb-4">🛡️</div>
         <h2 class="text-2xl font-black text-blue-900 mb-2">Medicare Navigator</h2>
         <p class="text-gray-500 mb-8 text-sm">Enter access code provided by your agent.</p>
         <input type="password" id="passInput" placeholder="Access Code" 
                onkeydown="if(event.key === 'Enter') checkLogin()"
-               class="relative z-10 w-full p-4 border rounded-xl mb-4 text-center text-lg outline-none focus:ring-2 focus:ring-blue-600">
+               class="w-full p-4 border rounded-xl mb-4 text-center text-lg outline-none focus:ring-2 focus:ring-blue-600 transition-all">
         <button onclick="checkLogin()" class="w-full bg-blue-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all">Unlock Dashboard</button>
         <p id="loginError" class="text-red-500 text-xs mt-4 hidden font-bold">Invalid code. Please contact your agent.</p>
     </div>
@@ -60,18 +60,20 @@
     <!-- Agent Admin View -->
     <section id="agentAdmin" class="hidden bg-blue-50 border-b border-blue-200 py-8 no-print">
         <div class="max-w-7xl mx-auto px-4">
-            <h2 class="text-2xl font-black text-blue-900 mb-6">Agent Central: Client Submissions</h2>
+            <h2 class="text-2xl font-black text-blue-900 mb-6 uppercase tracking-tight">Agent Central: Client Submissions</h2>
             <div class="card overflow-x-auto p-0"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-100"><tr><th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Client Name</th><th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Monthly Cost</th><th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Date</th><th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase">Actions</th></tr></thead><tbody id="adminTableBody" class="divide-y divide-gray-200"></tbody></table></div>
         </div>
     </section>
 
     <nav class="sticky top-0 z-50 bg-white shadow-md border-b border-gray-200 no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center">
-            <div class="flex items-center gap-2"><span class="text-2xl font-bold text-blue-900">&#10010;</span><span class="font-bold text-lg">Medicare<span class="text-blue-600">Map</span></span></div>
+            <div class="flex items-center gap-2"><span class="text-2xl font-bold text-blue-900">&#10010;</span><span class="font-bold text-lg uppercase tracking-tighter">Medicare<span class="text-blue-600">Map</span></span></div>
             <div class="flex space-x-2 sm:space-x-4 text-[10px] sm:text-xs font-bold uppercase">
-                <button onclick="syncToCloud()" id="syncBtn" class="bg-blue-600 text-white px-3 py-2 rounded shadow hover:bg-blue-700">Sync to Agent</button>
+                <button onclick="syncToCloud()" id="syncBtn" class="bg-blue-600 text-white px-3 py-2 rounded shadow hover:bg-blue-700 transition-colors">Sync to Agent</button>
                 <button onclick="exportData()" class="text-teal-600 hover:text-teal-800 p-2">Save Locally</button>
-                <button onclick="window.print()" class="bg-gray-100 border px-3 py-2 rounded">Print PDF</button>
+                <div class="w-px h-6 bg-gray-200 self-center"></div>
+                <button onclick="clearAllData()" class="text-red-500 hover:text-red-700 p-2">Clear Session</button>
+                <button onclick="window.print()" class="bg-gray-100 border px-3 py-2 rounded hover:bg-gray-200">Print PDF</button>
             </div>
         </div>
     </nav>
@@ -81,9 +83,9 @@
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 uppercase">2026 Strategic Review</h1>
             <div class="relative max-w-md mx-auto">
                 <input type="text" id="clientName" placeholder="Enter Client Name" 
-                    class="relative z-10 w-full bg-white text-blue-900 text-center text-xl p-3 rounded-xl border-2 border-blue-400 shadow-inner outline-none focus:ring-4 focus:ring-blue-300 transition-all">
-                <div class="bg-blue-800/40 p-3 rounded-xl mt-3 border border-blue-700/50">
-                    <p class="text-blue-100 text-xs font-bold leading-relaxed">
+                    class="relative z-20 w-full bg-white text-blue-900 text-center text-xl p-3 rounded-xl border-2 border-blue-400 shadow-inner outline-none focus:ring-4 focus:ring-blue-300 transition-all">
+                <div class="bg-blue-800/40 p-4 rounded-xl mt-4 border border-blue-700/50">
+                    <p class="text-blue-50 text-sm font-bold leading-relaxed">
                         Remember to consult with your Shead Group Advisor with the desired recommendation.
                     </p>
                 </div>
@@ -107,7 +109,7 @@
                             <span class="font-medium text-gray-700">Inpatient Deductible</span>
                             <span class="text-2xl font-black text-red-600">$1,736</span>
                         </div>
-                        <div class="grid grid-cols-1 gap-2 text-xs text-gray-500">
+                        <div class="grid grid-cols-1 gap-2 text-xs text-gray-500 font-medium">
                             <div class="flex justify-between border-b pb-1"><span>Days 1-60</span><span class="font-bold text-gray-800">$0 copay</span></div>
                             <div class="flex justify-between border-b pb-1"><span>Days 61-90</span><span class="font-bold text-gray-800">$434 / day</span></div>
                             <div class="flex justify-between border-b pb-1"><span>Skilled Nursing (Days 21-100)</span><span class="font-bold text-gray-800">$217 / day</span></div>
@@ -131,20 +133,20 @@
             </div>
         </section>
 
-        <!-- 2. Path Choice -->
+        <!-- 2. Path Education -->
         <section id="partnership-paths" class="scroll-mt-24">
-            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center">Medicare Partnership Paths</h2>
+            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center uppercase tracking-widest">Medicare Partnership Paths</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div class="card border-t-8 border-blue-900 shadow-xl text-center">
-                    <h3 class="text-xl font-bold text-gray-800 mb-6">Path Strategy Indicators</h3>
+                    <h3 class="text-xl font-bold text-gray-800 mb-6 uppercase">Path Strategy Indicators</h3>
                     <div class="chart-container"><canvas id="radarChart"></canvas></div>
                 </div>
                 <div class="space-y-8">
-                    <div class="bg-blue-50 p-6 rounded-3xl border-l-8 border-blue-700 shadow-sm">
+                    <div class="bg-blue-50 p-6 rounded-3xl border-l-8 border-blue-700 shadow-sm border border-blue-100">
                         <h4 class="text-xl font-bold text-blue-900 mb-2">Supplement Path (Medigap)</h4>
                         <p class="text-sm text-gray-700 leading-relaxed">The "Premium-Focused" path. Covers the federal 20% coinsurance so you have zero/low copays. No networks and no referrals required nationwide.</p>
                     </div>
-                    <div class="bg-orange-50 p-6 rounded-3xl border-l-8 border-orange-500 shadow-sm">
+                    <div class="bg-orange-50 p-6 rounded-3xl border-l-8 border-orange-500 shadow-sm border border-orange-100">
                         <h4 class="text-xl font-bold text-orange-900 mb-2">Advantage Path (Part C)</h4>
                         <p class="text-sm text-gray-700 leading-relaxed">The "Pay-as-you-go" path. Bundles coverage into a managed system with set copays for services and specific doctor networks.</p>
                     </div>
@@ -153,24 +155,21 @@
         </section>
 
         <!-- 3. Drug Tracker -->
-        <section id="part-d" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <section id="part-d" class="grid grid-cols-1 lg:grid-cols-2 gap-8 scroll-mt-24">
             <div class="card bg-teal-50 border-teal-200 flex flex-col justify-center text-center p-8">
                 <h3 class="text-2xl font-bold text-teal-900 mb-4 uppercase tracking-widest">Drug Plan Finder</h3>
                 <p class="text-teal-800 text-sm mb-8 leading-relaxed">Login to Medicare.gov to get your plan's monthly "Premium + Copay" total, then record them to the right.</p>
-                <a href="https://www.medicare.gov/plan-compare/" target="_blank" class="bg-teal-700 text-white font-bold py-5 rounded-2xl shadow-xl transition-transform hover:scale-[1.02]">Launch Medicare.gov Finder &#8599;</a>
+                <a href="https://www.medicare.gov/plan-compare/" target="_blank" class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-transform hover:scale-[1.02] active:scale-95">Launch Medicare.gov Finder &#8599;</a>
             </div>
             <div class="card border-2 border-teal-200 shadow-2xl p-8">
-                <h3 class="text-xl font-bold text-gray-900 mb-4">My Drug & Plan Costs</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-4 uppercase tracking-tight">My Drug & Plan Costs</h3>
                 
-                <!-- Plan Premium Row -->
                 <div class="mb-6 p-4 bg-teal-50 rounded-xl border-2 border-teal-200">
                     <label class="block text-xs font-black text-teal-900 uppercase mb-2">Monthly Part D Plan Premium</label>
-                    <div class="flex gap-2">
-                        <input type="number" id="partDPremiumInput" placeholder="Enter Plan Premium Amount ($)" 
-                            class="w-full p-4 border rounded-xl outline-none text-sm bg-white font-bold"
-                            oninput="updatePartDPremium(this.value)">
-                    </div>
-                    <p class="text-[10px] text-teal-600 mt-2 italic font-medium">Record the monthly base premium cost of the plan you selected.</p>
+                    <input type="number" id="partDPremiumInput" placeholder="Enter Plan Premium Amount ($)" 
+                        class="w-full p-4 border rounded-xl outline-none text-sm bg-white font-bold shadow-inner"
+                        oninput="updatePartDPremium(this.value)">
+                    <p class="text-[10px] text-teal-600 mt-2 italic font-medium uppercase tracking-tighter">Record the monthly base premium cost of the drug plan you selected.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -178,11 +177,11 @@
                     <div class="flex gap-2 no-print">
                         <input type="text" id="drugName" placeholder="Drug Name" class="flex-1 p-4 border rounded-xl outline-none text-sm bg-gray-50">
                         <input type="number" id="drugCost" placeholder="$" class="w-24 p-4 border rounded-xl outline-none text-sm bg-gray-50 text-center">
-                        <button onclick="addDrug()" class="bg-teal-600 text-white px-6 rounded-xl font-black hover:bg-teal-700">+</button>
+                        <button onclick="addDrug()" class="bg-teal-600 text-white px-6 rounded-xl font-black hover:bg-teal-700 transition-all shadow-sm">+</button>
                     </div>
                     <div id="drugListItems" class="space-y-2 mb-4"></div>
                     <div class="border-t pt-4 flex justify-between items-center text-sm">
-                        <span class="font-bold text-gray-600">Total Monthly Copays:</span>
+                        <span class="font-bold text-gray-600 uppercase">Total Monthly Copays:</span>
                         <span id="totalMonthlyDrugCost" class="text-xl font-black text-teal-600">$0.00</span>
                     </div>
                 </div>
@@ -190,10 +189,10 @@
         </section>
 
         <!-- 4. TSG Strategy Navigator -->
-        <section id="advisor" class="no-print">
+        <section id="advisor" class="no-print scroll-mt-24">
             <div class="card border-2 border-blue-100 bg-gradient-to-br from-blue-50/50 to-white shadow-lg">
                 <div class="flex items-center gap-3 mb-6"><span class="text-3xl">✨</span><h2 class="text-2xl font-black text-blue-900 uppercase">TSG Strategy Navigator</h2></div>
-                <p class="text-sm text-gray-600 mb-6 italic">Describe your lifestyle, healthcare issues (including medications) and future health goals.</p>
+                <p class="text-sm text-gray-600 mb-6 italic leading-relaxed font-medium">Describe your lifestyle, healthcare issues (including medications) and future health goals for a customized design recommendation.</p>
                 <div class="flex flex-col md:flex-row gap-4">
                     <textarea id="advisorInput" rows="2" placeholder="Describe your needs..." 
                         class="relative z-10 flex-1 p-4 rounded-2xl border outline-none focus:ring-2 focus:ring-blue-600 bg-white shadow-inner"></textarea>
@@ -204,12 +203,12 @@
             </div>
         </section>
 
-        <!-- 5. 15-Year Financials -->
-        <section id="financials">
-            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center">15-Year Cumulative Spend Analysis</h2>
+        <!-- 5. 15-Year Projections -->
+        <section id="financials" class="scroll-mt-24">
+            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center uppercase tracking-widest">15-Year Cumulative Spend Analysis</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-center">
-                <div class="bg-white border-l-8 border-red-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-red-900 font-bold text-xs uppercase mb-4 tracking-tighter">AARP Standard Supp G (15-Year Spend Projection)</h4><div id="cumulativeStandard" class="text-5xl font-black text-red-600 mb-4">$0</div><p class="text-xs text-gray-400 italic">Includes Part B and average 8% annual premium spikes.</p></div>
-                <div class="bg-white border-l-8 border-teal-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-teal-900 font-bold text-xs uppercase mb-4 tracking-tighter">United American HDG (15-Year Projection)</h4><div id="cumulativeHDG" class="text-5xl font-black text-teal-600 mb-4">$0</div><p class="text-xs text-gray-400 italic">Includes Part B and stable 2% annual premium growth.</p></div>
+                <div class="bg-white border-l-8 border-red-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-red-900 font-bold text-xs uppercase mb-4 tracking-tighter">AARP Standard Supp G (15-Year Spend Projection)</h4><div id="cumulativeStandard" class="text-5xl font-black text-red-600 mb-4">$0</div><p class="text-xs text-gray-400 italic font-medium">Includes Part B and average 8% annual premium spikes.</p></div>
+                <div class="bg-white border-l-8 border-teal-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-teal-900 font-bold text-xs uppercase mb-4 tracking-tighter">United American HDG (15-Year Projection)</h4><div id="cumulativeHDG" class="text-5xl font-black text-teal-600 mb-4">$0</div><p class="text-xs text-gray-400 italic font-medium">Includes Part B and stable 2% annual premium growth.</p></div>
             </div>
             <div class="card p-10 border-t-8 border-blue-900 shadow-2xl bg-white text-center">
                 <h3 class="text-xl font-bold text-gray-400 mb-8 uppercase tracking-widest">The "Stop Rate-Chasing" Projection</h3>
@@ -217,46 +216,46 @@
             </div>
         </section>
 
-        <!-- 6. Strategy Spotlight -->
-        <section id="strategy" class="bg-orange-50 border-2 border-orange-200 rounded-[3rem] p-12 shadow-sm">
-            <h2 class="text-3xl font-black text-orange-900 mb-10">PRO Strategy: Rate Stability Dashboard</h2>
+        <!-- 6. PRO Strategy Spotlight -->
+        <section id="strategy" class="bg-orange-50 border-2 border-orange-200 rounded-[3rem] p-12 shadow-sm scroll-mt-24">
+            <h2 class="text-3xl font-black text-orange-900 mb-10 uppercase tracking-widest text-center">PRO Strategy: Rate Stability Dashboard</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-sm leading-relaxed">
-                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight">Stop Rate Chasing</h4><p>Standard Medigap Plan G often sees massive annual increases. United American HDG offers the same medical freedom with a premium floor that stays stable for life.</p></div>
-                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight">The Synergy Payout</h4><p>Pair UA HDG with an Indemnity plan. You save thousands in premiums each year and use the insurance payout to satisfy the medical deductible.</p></div>
-                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight">Guaranteed Health Access</h4><p>Indemnity plans provide a <strong>Guaranteed Issue window (Age 65-70)</strong>, ensuring you can qualify even with complex pre-existing conditions.</p></div>
+                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight uppercase">Stop Rate Chasing</h4><p class="text-gray-700">Standard Medigap Plan G often sees massive annual increases. United American HDG offers the same medical freedom with a premium floor that stays stable for life.</p></div>
+                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight uppercase">The Synergy Payout</h4><p class="text-gray-700">Pair UA HDG with an Indemnity plan. You save thousands in premiums each year and use the insurance payout to satisfy the medical deductible.</p></div>
+                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight uppercase">Guaranteed Access</h4><p class="text-gray-700">Indemnity plans provide a <strong>Guaranteed Issue window (Age 65-70)</strong>, ensuring you can qualify even with complex pre-existing conditions.</p></div>
             </div>
         </section>
 
-        <!-- 7. Detailed Gap Strategy -->
-        <section id="gap-detail">
+        <!-- 7. Bridging logic -->
+        <section id="gap-detail" class="scroll-mt-24">
             <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center uppercase tracking-widest">How the Synergy Strategy Works</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
                 <div class="card border-l-8 border-teal-500 p-8 shadow-lg">
-                    <h3 class="text-2xl font-black text-teal-900 mb-4">1. Responsibility (UA HDG)</h3>
-                    <p class="text-sm text-gray-600 mb-6">You pay the first $2,950 of medical bills in exchange for the lowest nationwide supplement premium.</p>
+                    <h3 class="text-2xl font-black text-teal-900 mb-4 uppercase">1. Responsibility (UA HDG)</h3>
+                    <p class="text-sm text-gray-600 mb-6 leading-relaxed font-medium">You pay the first $2,950 of medical bills in exchange for the lowest nationwide supplement premium.</p>
                     <div class="p-6 bg-teal-50 rounded-2xl text-center border border-teal-100 shadow-inner">
                         <span class="text-4xl font-black text-teal-700">$2,950 Gap</span>
-                        <p class="text-[10px] uppercase font-bold text-teal-600 mt-2">2026 HDG Deductible</p>
+                        <p class="text-[10px] uppercase font-bold text-teal-600 mt-2 tracking-widest">2026 HDG Deductible</p>
                     </div>
                 </div>
                 <div class="card border-l-8 border-blue-500 p-8 shadow-lg">
-                    <h3 class="text-2xl font-black text-blue-900 mb-4">2. The Solution (Indemnity)</h3>
-                    <p class="text-sm text-gray-600 mb-6 leading-relaxed">A private policy that pays cash directly to you during health events to satisfy the medical gap above.</p>
+                    <h3 class="text-2xl font-black text-blue-900 mb-4 uppercase">2. The Solution (Indemnity)</h3>
+                    <p class="text-sm text-gray-600 mb-6 leading-relaxed font-medium">A private policy that pays cash directly to you during health events to satisfy the medical gap above.</p>
                     <div class="space-y-3 text-[11px] font-black text-blue-900 uppercase">
-                        <div class="flex justify-between bg-blue-50 p-3 rounded-lg border border-blue-100"><span>Hospital Admission</span><span>$1,000 / day</span></div>
-                        <div class="flex justify-between bg-blue-50 p-3 rounded-lg border border-blue-100"><span>Skilled Nursing Care</span><span>$500 / day</span></div>
-                        <div class="flex justify-between bg-blue-50 p-3 rounded-lg border border-blue-100"><span>Outpatient Surgery/Hospital</span><span>$700</span></div>
+                        <div class="flex justify-between bg-blue-50 p-3 rounded-lg border border-blue-100 shadow-sm"><span>Hospital Admission</span><span>$1,000 / day</span></div>
+                        <div class="flex justify-between bg-blue-50 p-3 rounded-lg border border-blue-100 shadow-sm"><span>Skilled Nursing Care</span><span>$500 / day</span></div>
+                        <div class="flex justify-between bg-blue-50 p-3 rounded-lg border border-blue-100 shadow-sm"><span>Outpatient Surgery/Hospital</span><span>$700</span></div>
                     </div>
                 </div>
             </div>
             <div class="card bg-blue-900 text-white p-10 border-none shadow-2xl">
-                <h3 class="text-2xl font-bold mb-8 flex items-center gap-3"><span class="bg-blue-600 px-3 py-1 rounded text-[10px] uppercase font-bold tracking-widest">Case Study</span> Synergy in Action</h3>
+                <h3 class="text-2xl font-bold mb-8 flex items-center gap-3 uppercase"><span class="bg-blue-600 px-3 py-1 rounded text-[10px] uppercase font-black tracking-widest">Case Study</span> Synergy in Action</h3>
                 <div class="bg-white/10 p-10 rounded-[2rem] border border-white/20 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center text-sm">
                     <div class="space-y-6">
-                        <div class="flex justify-between items-center border-b border-white/20 pb-3"><span>Health Event: 3-Day Hospital Stay</span><span class="font-bold uppercase text-[10px] bg-blue-600 px-2 py-1 rounded">The Trigger</span></div>
+                        <div class="flex justify-between items-center border-b border-white/20 pb-3"><span>Health Event: 3-Day Hospital Stay</span><span class="font-black uppercase text-[10px] bg-blue-600 px-2 py-1 rounded">The Trigger</span></div>
                         <div class="flex justify-between items-center border-b border-white/20 pb-3 text-red-300 font-black text-lg"><span>UA Medigap HDG Deductible Owed</span><span>-$2,950</span></div>
                         <div class="flex justify-between items-center border-b border-white/20 pb-3 text-green-300 font-black text-lg"><span>Indemnity Payout ($1k x 3 Days)</span><span>+$3,000</span></div>
-                        <div class="flex justify-between items-center text-3xl font-black pt-6"><span>Your Net Final Cost</span><span class="text-green-400">$0.00</span></div>
+                        <div class="flex justify-between items-center text-3xl font-black pt-6"><span>Your Net Final Cost</span><span class="text-green-400 font-black">$0.00</span></div>
                     </div>
                     <p class="text-lg italic font-light leading-relaxed">"By using United American HDG + Indemnity, you stop chasing rates every year. The Indemnity payout satisfies your deductible during major events, while you keep the massive premium savings for life."</p>
                 </div>
@@ -264,55 +263,55 @@
         </section>
 
         <!-- 8. Scenario Explorer -->
-        <section id="scenarios" class="no-print">
+        <section id="scenarios" class="no-print scroll-mt-24">
             <div class="card border-2 border-orange-200 bg-orange-50/20 shadow-xl p-10 rounded-[3rem]">
-                <div class="flex items-center gap-3 mb-8"><span class="text-4xl">✨</span><h2 class="text-3xl font-black text-orange-900 uppercase">Scenario Health Explorer</h2></div>
+                <div class="flex items-center gap-3 mb-4"><span class="text-4xl">✨</span><h2 class="text-3xl font-black text-orange-900 uppercase">Scenario Health Explorer</h2></div>
+                <p class="text-sm text-gray-700 mb-8 font-bold italic leading-relaxed">Simulate specific medical events to see exactly how different plan designs respond financially, helping you identify potential out-of-pocket exposure before it happens.</p>
                 <textarea id="scenarioInput" rows="3" placeholder="e.g., What happens if I stay in the hospital for 2 days and need an MRI?" 
                     class="relative z-10 w-full p-6 rounded-[2rem] border outline-none focus:ring-4 focus:ring-orange-500/20 shadow-inner bg-white text-lg mb-6"></textarea>
                 <button onclick="getScenarioResult()" id="scenarioBtn" 
-                    class="bg-orange-500 hover:bg-orange-600 text-white font-black py-6 px-12 rounded-[2rem] shadow-2xl text-xl transition-all">Analyze ✨ Health Event</button>
+                    class="bg-orange-500 hover:bg-orange-600 text-white font-black py-6 px-12 rounded-[2rem] shadow-2xl text-xl transition-all active:scale-95">Analyze ✨ Health Event</button>
                 <div id="scenarioResult" class="hidden mt-10 p-10 bg-white rounded-[2rem] border border-orange-100 shadow-2xl text-gray-800 text-sm leading-relaxed"></div>
             </div>
         </section>
 
         <!-- 9. Summary Table -->
-        <section id="summaryTable">
+        <section id="summaryTable" class="scroll-mt-24">
             <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center uppercase tracking-widest">Plan Summary Comparison</h2>
             <div class="card p-0 overflow-x-auto border-t-8 border-gray-900 shadow-2xl">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase">Strategic Design</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-blue-600 uppercase">AARP Plan G</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-teal-600 uppercase">UA High-Ded G</th>
-                            <th class="px-6 py-4 text-left text-xs font-bold text-orange-600 uppercase">AARP Advantage</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Strategic Design</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-blue-600 uppercase tracking-widest">AARP Plan G</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-teal-600 uppercase tracking-widest">UA High-Ded G</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-orange-600 uppercase tracking-widest">AARP Advantage</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 text-sm">
+                    <tbody class="divide-y divide-gray-200 text-sm font-medium">
                         <tr>
-                            <td class="px-6 py-4 font-bold bg-gray-50/50">Monthly Part B Cost</td>
+                            <td class="px-6 py-4 bg-gray-50/50">Monthly Part B Cost</td>
                             <td class="px-6 py-4">$202.90</td>
                             <td class="px-6 py-4">$202.90</td>
                             <td class="px-6 py-4">$202.90</td>
                         </tr>
                         <tr>
-                            <td class="px-6 py-4 font-bold bg-gray-50/50">Monthly Supp/Adv Cost</td>
+                            <td class="px-6 py-4 bg-gray-50/50">Monthly Supp/Adv Cost</td>
                             <td class="px-6 py-4">$155.00+</td>
                             <td class="px-6 py-4">$50.00+</td>
                             <td class="px-6 py-4">$0.00</td>
                         </tr>
-                        <!-- New Row for Part D Premium -->
                         <tr>
-                            <td class="px-6 py-4 font-bold bg-gray-50/50">Monthly Part D Premium</td>
-                            <td class="px-6 py-4 font-bold text-blue-600" id="summaryPartDPremium_G">$0.00</td>
-                            <td class="px-6 py-4 font-bold text-blue-600" id="summaryPartDPremium_HDG">$0.00</td>
-                            <td class="px-6 py-4 font-bold text-blue-600" id="summaryPartDPremium_Adv">$0.00</td>
+                            <td class="px-6 py-4 bg-gray-50/50">Monthly Part D Premium</td>
+                            <td class="px-6 py-4 text-blue-600 font-bold" id="summaryPartDPremium_G">$0.00</td>
+                            <td class="px-6 py-4 text-blue-600 font-bold" id="summaryPartDPremium_HDG">$0.00</td>
+                            <td class="px-6 py-4 text-blue-600 font-bold" id="summaryPartDPremium_Adv">$0.00</td>
                         </tr>
                         <tr>
-                            <td class="px-6 py-4 font-bold bg-gray-50/50">Monthly Scripts (Copays)</td>
-                            <td class="px-6 py-4 font-bold text-teal-600" id="summaryPartD_G">$0.00</td>
-                            <td class="px-6 py-4 font-bold text-teal-600" id="summaryPartD_HDG">$0.00</td>
-                            <td class="px-6 py-4 font-bold text-teal-600" id="summaryPartD_Adv">$0.00</td>
+                            <td class="px-6 py-4 bg-gray-50/50">Monthly Scripts (Copays)</td>
+                            <td class="px-6 py-4 text-teal-600 font-bold" id="summaryPartD_G">$0.00</td>
+                            <td class="px-6 py-4 text-teal-600 font-bold" id="summaryPartD_HDG">$0.00</td>
+                            <td class="px-6 py-4 text-teal-600 font-bold" id="summaryPartD_Adv">$0.00</td>
                         </tr>
                         <tr class="bg-blue-50/30">
                             <td class="px-6 py-4 font-black">Total Monthly Floor</td>
@@ -321,13 +320,13 @@
                             <td class="px-6 py-4 font-black text-orange-900" id="summaryTotal_Adv">$202.90</td>
                         </tr>
                         <tr>
-                            <td class="px-6 py-4 font-bold bg-gray-50/50">Annual Med Risk (MOOP)</td>
+                            <td class="px-6 py-4 bg-gray-50/50 uppercase text-[10px] tracking-widest">Annual Med Risk (MOOP)</td>
                             <td class="px-6 py-4">$283</td>
                             <td class="px-6 py-4">$2,950</td>
                             <td class="px-6 py-4">$3,900</td>
                         </tr>
                         <tr>
-                            <td class="px-6 py-4 font-bold bg-gray-50/50">Doctor Access</td>
+                            <td class="px-6 py-4 bg-gray-50/50 uppercase text-[10px] tracking-widest">Doctor Access</td>
                             <td class="px-6 py-4">Any USA Doctor</td>
                             <td class="px-6 py-4">Any USA Doctor</td>
                             <td class="px-6 py-4">Network Required</td>
@@ -338,15 +337,15 @@
         </section>
 
         <!-- Disclosures -->
-        <section id="disclosures" class="bg-gray-100 p-8 rounded-2xl border border-gray-200 text-[11px] leading-relaxed text-gray-500">
-            <p class="font-bold text-gray-700 mb-2 uppercase tracking-widest">Important Disclosure</p>
+        <section id="disclosures" class="bg-gray-100 p-8 rounded-2xl border border-gray-200 text-[11px] leading-relaxed text-gray-500 font-medium">
+            <p class="font-black text-gray-700 mb-2 uppercase tracking-widest">Important Disclosure</p>
             <p class="mb-4">Please speak with a licensed member of <strong>The Shead Group</strong> to obtain personalized premium numbers and finalize plan availability in your specific zip code. All information provided in this dashboard is conceptual and intended for strategic educational purposes until individual premiums are secured, underwriting is completed (if applicable), and a policy is issued by the carrier.</p>
             <p>Carrier references to AARP (UnitedHealthcare) and United American are used for representative strategy modeling based on 2026 filed data. Medicare Part B premiums and Part A deductibles are based on 2026 CMS official projections.</p>
         </section>
     </main>
 
     <footer class="bg-gray-900 py-20 text-center text-gray-500 border-t border-gray-800">
-        <p class="text-sm font-medium text-gray-400 mb-6">Powered by The Shead Group LLC & Gemini AI Analytics</p>
+        <p class="text-sm font-bold text-gray-400 mb-6 uppercase tracking-widest">Powered by The Shead Group LLC & Gemini AI Analytics</p>
     </footer>
 </div>
 
@@ -368,7 +367,7 @@
             gate.style.opacity = '0';
             setTimeout(() => {
                 gate.classList.add('hidden');
-                gate.style.display = 'none'; // Completely remove from layout
+                gate.style.display = 'none';
                 dashboard.classList.remove('hidden');
                 try { initCharts(); } catch (e) { console.error("Chart Error:", e); }
                 if (input === agentPass && window.fb && !window.fb.disabled) {
@@ -376,15 +375,32 @@
                     loadAdminData();
                 }
                 window.scrollTo(0,0);
-                renderDrugList(); // Sync summary table immediately
+                renderDrugList(); 
             }, 400);
         } else {
             err.classList.remove('hidden');
         }
     }
 
+    function clearAllData() {
+        if(confirm("Wipe this session's drug list and name? (This will not deleteSynced cloud records)")) {
+            userDrugs = [];
+            userPartDPremium = 0;
+            localStorage.removeItem('medicareDrugs');
+            localStorage.removeItem('medicarePartDPremium');
+            document.getElementById('clientName').value = '';
+            document.getElementById('advisorInput').value = '';
+            document.getElementById('scenarioInput').value = '';
+            document.getElementById('partDPremiumInput').value = '';
+            document.getElementById('advisorResult').classList.add('hidden');
+            document.getElementById('scenarioResult').classList.add('hidden');
+            renderDrugList();
+            alert("Session cleared.");
+        }
+    }
+
     async function syncToCloud() {
-        if (!window.fb || window.fb.disabled) { alert("Note: Local saving is the primary method on this host. Use 'Save Locally' to send a record to your agent."); return; }
+        if (!window.fb || window.fb.disabled) { alert("Note: Local saving only on this host. Use 'Save Locally' to download a record."); return; }
         const name = document.getElementById('clientName').value.trim();
         if (!name) { alert("Please enter client name in the header first."); return; }
         const btn = document.getElementById('syncBtn');
@@ -412,7 +428,7 @@
             snap.docs.forEach(doc => {
                 const d = doc.data();
                 const row = document.createElement('tr');
-                row.innerHTML = `<td class="px-6 py-4 text-sm font-bold text-gray-900">${d.clientName}</td><td class="px-6 py-4 font-black text-teal-600">$${(d.totalMonthlyCost || 0).toFixed(2)}</td><td class="px-6 py-4 text-xs text-gray-400">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td><td class="px-6 py-4 text-blue-600 underline cursor-pointer" onclick='alert("Meds: ${d.drugs ? d.drugs.map(m=>m.name).join(", ") : "None"}\\nPart D Premium: $${(d.partDPremium || 0).toFixed(2)}")'>View Meds</td>`;
+                row.innerHTML = `<td class="px-6 py-4 text-sm font-bold text-gray-900">${d.clientName}</td><td class="px-6 py-4 font-black text-teal-600 font-bold">$${(d.totalMonthlyCost || 0).toFixed(2)}</td><td class="px-6 py-4 text-xs text-gray-400">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td><td class="px-6 py-4 text-blue-600 underline cursor-pointer" onclick='alert("Meds: ${d.drugs ? d.drugs.map(m=>m.name).join(", ") : "None"}\\nPart D Premium: $${(d.partDPremium || 0).toFixed(2)}")'>View Details</td>`;
                 tbody.appendChild(row);
             });
         });
@@ -420,7 +436,8 @@
 
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey) return "AI Key missing. Paste your key in scripts.";
-        const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
+        // IMPORTANT: Use v1beta endpoint for systemInstruction support
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         try {
             const res = await fetch(url, { 
                 method: 'POST', 
@@ -432,15 +449,15 @@
             });
             const d = await res.json(); 
             if (d.error) return "AI Error: " + d.error.message;
-            return d.candidates?.[0]?.content?.parts?.[0]?.text || "No insights generated.";
-        } catch (e) { return "Service error."; }
+            return d.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+        } catch (e) { return "Service connection error."; }
     }
 
     async function getAdvisorRecommendation() {
         const resDiv = document.getElementById('advisorResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Thinking...`;
-        const sys = `Expert Advisor. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Compare to AARP Standard G. Mention Shead Group Advisor consultation.`;
+        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Mention Shead Group consultation.`;
         const text = await callGemini(document.getElementById('advisorInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
@@ -449,7 +466,7 @@
         const resDiv = document.getElementById('scenarioResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Simulating...`;
-        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and Advantage ($3,900 MOOP) using 2026 data. Explain how $1k/day hospital indemnity zero-out the UA HDG gap.`;
+        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and Advantage ($3,900 MOOP) using 2026 data. Explain how $1k/day hospital indemnity zero-out the UA HDG gap. Professional tone.`;
         const text = await callGemini(document.getElementById('scenarioInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
@@ -485,10 +502,8 @@
         const premiumInput = document.getElementById('partDPremiumInput');
         
         if(!container) return;
-        
-        // Sync premium input if needed
         if (premiumInput && premiumInput.value === "") {
-            premiumInput.value = userPartDPremium || "";
+            premiumInput.value = userPartDPremium > 0 ? userPartDPremium : "";
         }
 
         container.innerHTML = ''; 
@@ -496,12 +511,12 @@
         userDrugs.forEach(d => {
             sum += d.cost;
             const div = document.createElement('div'); div.className = 'flex justify-between items-center bg-teal-50 p-3 rounded-lg border text-sm';
-            div.innerHTML = `<div><span class="font-bold">${d.name}</span><br><span class="text-xs text-teal-600">$${d.cost.toFixed(2)}/mo</span></div><button onclick="removeDrug(${d.id})" class="text-red-400 font-bold px-2">&times;</button>`;
+            div.innerHTML = `<div><span class="font-bold">${d.name}</span><br><span class="text-xs text-teal-600 font-bold">$${d.cost.toFixed(2)}/mo</span></div><button onclick="removeDrug(${d.id})" class="text-red-400 font-bold px-2 hover:text-red-700 transition-colors">&times;</button>`;
             container.appendChild(div);
         });
         totalDisp.innerText = `$${sum.toFixed(2)}`;
 
-        // Update Summary Table dynamic fields
+        // Summary Table Sync
         const sPartDPrem_G = document.getElementById('summaryPartDPremium_G');
         const sPartDPrem_HDG = document.getElementById('summaryPartDPremium_HDG');
         const sPartDPrem_Adv = document.getElementById('summaryPartDPremium_Adv');
@@ -515,17 +530,14 @@
         const sTotal_Adv = document.getElementById('summaryTotal_Adv');
 
         if (sPartD_G) {
-            // Update Plan Premiums
             sPartDPrem_G.innerText = `$${userPartDPremium.toFixed(2)}`;
             sPartDPrem_HDG.innerText = `$${userPartDPremium.toFixed(2)}`;
             sPartDPrem_Adv.innerText = `$${userPartDPremium.toFixed(2)}`;
 
-            // Update Copays
             sPartD_G.innerText = `$${sum.toFixed(2)}`;
             sPartD_HDG.innerText = `$${sum.toFixed(2)}`;
             sPartD_Adv.innerText = `$${sum.toFixed(2)}`;
 
-            // Totals: (Part B + Supp/Adv Floor) + Script Sum + Plan Premium
             sTotal_G.innerText = `$${(357.90 + sum + userPartDPremium).toFixed(2)}+`;
             sTotal_HDG.innerText = `$${(252.90 + sum + userPartDPremium).toFixed(2)}+`;
             sTotal_Adv.innerText = `$${(202.90 + sum + userPartDPremium).toFixed(2)}`;
@@ -533,10 +545,7 @@
     }
 
     function exportData() { 
-        const data = {
-            drugs: userDrugs,
-            partDPremium: userPartDPremium
-        };
+        const data = { drugs: userDrugs, partDPremium: userPartDPremium };
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); 
         const dl = document.createElement('a'); 
         dl.setAttribute("href", dataStr); 
@@ -544,22 +553,8 @@
         dl.click(); 
     }
 
-    function importData(e) {
-        const reader = new FileReader();
-        reader.onload = (ev) => { 
-            try {
-                const data = JSON.parse(ev.target.result);
-                if (data.drugs) userDrugs = data.drugs;
-                if (data.partDPremium !== undefined) userPartDPremium = data.partDPremium;
-                saveAndRender(); 
-            } catch (err) { alert("Invalid file format."); }
-        };
-        reader.readAsText(e.target.files[0]);
-    }
-
     function initCharts() {
         const fmt = (l) => l.length <= 16 ? l : l.match(/.{1,16}(\s|$)/g).map(s => s.trim());
-        
         new Chart(document.getElementById('radarChart'), { 
             type: 'radar', 
             data: { 
@@ -582,10 +577,8 @@
             sSum += annS; hSum += annH; 
             b *= 1.053; d *= 1.025; g *= 1.08; h *= 1.02; 
         }
-        const cS = document.getElementById('cumulativeStandard');
-        const cH = document.getElementById('cumulativeHDG');
-        if (cS) cS.innerText = '$' + Math.round(sSum).toLocaleString();
-        if (cH) cH.innerText = '$' + Math.round(hSum).toLocaleString();
+        document.getElementById('cumulativeStandard').innerText = '$' + Math.round(sSum).toLocaleString();
+        document.getElementById('cumulativeHDG').innerText = '$' + Math.round(hSum).toLocaleString();
         
         new Chart(document.getElementById('projectionChart'), { 
             type: 'line', 
