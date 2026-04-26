@@ -169,7 +169,7 @@
                     <input type="number" id="partDPremiumInput" placeholder="Enter Plan Premium Amount ($)" 
                         class="relative z-10 w-full p-4 border rounded-xl outline-none text-sm bg-white font-black shadow-inner"
                         oninput="updatePartDPremium(this.value)">
-                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected.</p>
+                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected (Medigap paths only).</p>
                 </div>
 
                 <div class="space-y-4">
@@ -228,7 +228,7 @@
 
         <!-- 7. Bridging logic -->
         <section id="gap-detail" class="scroll-mt-24">
-            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center uppercase tracking-widest font-black">How the Synergy Strategy Works</h2>
+            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest font-black">How the Synergy Strategy Works</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
                 <div class="card border-l-8 border-teal-500 p-8 shadow-lg">
                     <h3 class="text-2xl font-black text-teal-900 mb-4 uppercase">1. Responsibility (UA HDG)</h3>
@@ -282,18 +282,18 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Strategic Design</th>
-                            <th class="px-6 py-4 text-left text-xs font-black text-blue-600 uppercase tracking-widest">AARP Plan G</th>
-                            <th class="px-6 py-4 text-left text-xs font-black text-teal-600 uppercase tracking-widest">UA High-Ded G</th>
-                            <th class="px-6 py-4 text-left text-xs font-black text-orange-600 uppercase tracking-widest">AARP Advantage</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Strategic Design</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-blue-600 uppercase tracking-widest">AARP Plan G</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-teal-600 uppercase tracking-widest">UA High-Ded G</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-orange-600 uppercase tracking-widest">AARP Advantage</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 text-sm font-bold">
                         <tr>
                             <td class="px-6 py-4 bg-gray-50/50 uppercase text-[10px]">Monthly Part B Cost</td>
-                            <td class="px-6 py-4 font-black">$202.90</td>
-                            <td class="px-6 py-4 font-black">$202.90</td>
-                            <td class="px-6 py-4 font-black">$202.90</td>
+                            <td class="px-6 py-4 font-black font-black">$202.90</td>
+                            <td class="px-6 py-4 font-black font-black">$202.90</td>
+                            <td class="px-6 py-4 font-black font-black">$202.90</td>
                         </tr>
                         <tr>
                             <td class="px-6 py-4 bg-gray-50/50 uppercase text-[10px]">Monthly Supp/Adv Cost</td>
@@ -428,7 +428,7 @@
             snap.docs.forEach(doc => {
                 const d = doc.data();
                 const row = document.createElement('tr');
-                row.innerHTML = `<td class="px-6 py-4 text-sm font-bold text-gray-900 font-black">${d.clientName}</td><td class="px-6 py-4 font-black text-teal-600 font-bold">$${(d.totalMonthlyCost || 0).toFixed(2)}</td><td class="px-6 py-4 text-xs text-gray-400 font-black">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td><td class="px-6 py-4 text-blue-600 underline cursor-pointer font-black" onclick='alert("Meds: ${d.drugs ? d.drugs.map(m=>m.name).join(", ") : "None"}\\nPart D Premium: $${(d.partDPremium || 0).toFixed(2)}")'>View Details</td>`;
+                row.innerHTML = `<td class="px-6 py-4 text-sm font-bold text-gray-900 font-black">${d.clientName}</td><td class="px-6 py-4 font-black text-teal-600 font-black">$${(d.totalMonthlyCost || 0).toFixed(2)}</td><td class="px-6 py-4 text-xs text-gray-400 font-black">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td><td class="px-6 py-4 text-blue-600 underline cursor-pointer font-black" onclick='alert("Meds: ${d.drugs ? d.drugs.map(m=>m.name).join(", ") : "None"}\\nPart D Premium: $${(d.partDPremium || 0).toFixed(2)}")'>View Details</td>`;
                 tbody.appendChild(row);
             });
         });
@@ -437,8 +437,8 @@
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey || apiKey.length < 10) return "AI Service not configured. Please enter a valid Gemini API Key.";
         
-        // Merged structure to avoid systemInstruction errors and model mismatches
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        // Merged structure to avoid systemInstruction errors and model mismatches across versions
+        const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
         const payload = {
             contents: [{ 
@@ -537,13 +537,24 @@
         const sTotal_Adv = document.getElementById('summaryTotal_Adv');
 
         if (sPartD_G) {
+            // Plan Premiums
             sPartDPrem_G.innerText = `$${userPartDPremium.toFixed(2)}`;
             sPartDPrem_HDG.innerText = `$${userPartDPremium.toFixed(2)}`;
+
+            // Copays
             sPartD_G.innerText = `$${sum.toFixed(2)}`;
             sPartD_HDG.innerText = `$${sum.toFixed(2)}`;
             sPartD_Adv.innerText = `$${sum.toFixed(2)}`;
+
+            // Totals
+            // AARP G Column: B ($202.90) + Supp ($155) + D Prem (User Input) + Copays (Sum)
             sTotal_G.innerText = `$${(357.90 + sum + userPartDPremium).toFixed(2)}+`;
+            
+            // UA HDG Column: B ($202.90) + Supp ($50) + D Prem (User Input) + Copays (Sum)
             sTotal_HDG.innerText = `$${(252.90 + sum + userPartDPremium).toFixed(2)}+`;
+            
+            // Advantage Column (MAPD): B ($202.90) + Adv ($0) + Copays (Sum)
+            // Note: Standalone Part D Premium is NOT added here because it's built into the MAPD.
             sTotal_Adv.innerText = `$${(202.90 + sum).toFixed(2)}`;
         }
     }
