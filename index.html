@@ -135,7 +135,7 @@
 
         <!-- 2. Path Education -->
         <section id="partnership-paths" class="scroll-mt-24">
-            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest font-black">Medicare Partnership Paths</h2>
+            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest">Medicare Partnership Paths</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div class="card border-t-8 border-blue-900 shadow-xl text-center">
                     <h3 class="text-xl font-bold text-gray-800 mb-6 uppercase tracking-widest">Path Strategy Indicators</h3>
@@ -169,7 +169,7 @@
                     <input type="number" id="partDPremiumInput" placeholder="Enter Plan Premium Amount ($)" 
                         class="relative z-10 w-full p-4 border rounded-xl outline-none text-sm bg-white font-black shadow-inner"
                         oninput="updatePartDPremium(this.value)">
-                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected (Medigap paths only).</p>
+                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -199,7 +199,7 @@
                     <button onclick="getAdvisorRecommendation()" id="advisorBtn" 
                         class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-xl transition-all">Analyze ✨ Needs</button>
                 </div>
-                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-bold"></div>
+                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-black"></div>
             </div>
         </section>
 
@@ -226,7 +226,7 @@
             </div>
         </section>
 
-        <!-- 7. Bridging logic -->
+        <!-- 7. Detailed Gap Strategy -->
         <section id="gap-detail" class="scroll-mt-24">
             <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest font-black">How the Synergy Strategy Works</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
@@ -271,7 +271,7 @@
                     class="relative z-10 w-full p-6 rounded-[2rem] border outline-none focus:ring-4 focus:ring-orange-500/20 shadow-inner bg-white text-lg mb-6 font-medium"></textarea>
                 <button onclick="getScenarioResult()" id="scenarioBtn" 
                     class="bg-orange-500 hover:bg-orange-600 text-white font-black py-6 px-12 rounded-[2rem] shadow-2xl text-xl transition-all active:scale-95">Analyze ✨ Health Event</button>
-                <div id="scenarioResult" class="hidden mt-10 p-10 bg-white rounded-[2rem] border border-orange-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-bold"></div>
+                <div id="scenarioResult" class="hidden mt-10 p-10 bg-white rounded-[2rem] border border-orange-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-black"></div>
             </div>
         </section>
 
@@ -355,7 +355,7 @@
     const partB = "-xlPGnXgUkg_YZYbM"; // Second half of Gemini Key
     const apiKey = partA + partB;
 
-    // Use the standard model name for production v1 stability
+    // Fixed model string for standard beta environment
     const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-1.5-flash";
 
     function checkLogin() {
@@ -438,14 +438,14 @@
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey || apiKey.length < 10) return "AI Service not configured. Please enter a valid Gemini API Key.";
         
-        // SWITCHING TO v1 PRODUCTION ENDPOINT FOR BROADEST COMPATIBILITY
-        const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
+        // FORCED v1beta architecture to match gemini-1.5-flash standard
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
-        // MERGED PROMPT: Since v1 doesn't support systemInstruction field, we embed the persona in the text
-        const mergedContent = `INSTRUCTIONS FOR MEDICARE EXPERT: ${systemPrompt}\n\nUSER QUESTION: ${prompt}`;
-
+        // COMPATIBILITY PAYLOAD: We merge instructions to avoid "systemInstruction not found" errors
         const payload = {
-            contents: [{ parts: [{ text: mergedContent }] }]
+            contents: [{ 
+                parts: [{ text: `ROLE: ${systemPrompt}\n\nUSER QUESTION: ${prompt}` }] 
+            }]
         };
 
         try {
@@ -470,7 +470,7 @@
         const resDiv = document.getElementById('advisorResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Thinking...`;
-        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Always recommend stability and consulting with a Shead Group Advisor. Keep tone professional.`;
+        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Always recommend stability and consulting with a Shead Group Advisor.`;
         const text = await callGemini(document.getElementById('advisorInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
