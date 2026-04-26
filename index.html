@@ -169,7 +169,7 @@
                     <input type="number" id="partDPremiumInput" placeholder="Enter Plan Premium Amount ($)" 
                         class="relative z-10 w-full p-4 border rounded-xl outline-none text-sm bg-white font-black shadow-inner"
                         oninput="updatePartDPremium(this.value)">
-                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected.</p>
+                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected (Medigap paths only).</p>
                 </div>
 
                 <div class="space-y-4">
@@ -291,9 +291,9 @@
                     <tbody class="divide-y divide-gray-200 text-sm font-bold">
                         <tr>
                             <td class="px-6 py-4 bg-gray-50/50 uppercase text-[10px]">Monthly Part B Cost</td>
-                            <td class="px-6 py-4 font-black font-black">$202.90</td>
-                            <td class="px-6 py-4 font-black font-black">$202.90</td>
-                            <td class="px-6 py-4 font-black font-black">$202.90</td>
+                            <td class="px-6 py-4 font-black">$202.90</td>
+                            <td class="px-6 py-4 font-black">$202.90</td>
+                            <td class="px-6 py-4 font-black">$202.90</td>
                         </tr>
                         <tr>
                             <td class="px-6 py-4 bg-gray-50/50 uppercase text-[10px]">Monthly Supp/Adv Cost</td>
@@ -355,8 +355,8 @@
     const partB = "-xlPGnXgUkg_YZYbM"; // Second half of Gemini Key
     const apiKey = partA + partB;
 
-    // Use the alias to point to the latest stable flash model
-    const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-1.5-flash-latest";
+    // Use the standard model name for production v1 stability
+    const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-1.5-flash";
 
     function checkLogin() {
         const input = document.getElementById('passInput').value.trim();
@@ -438,12 +438,14 @@
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey || apiKey.length < 10) return "AI Service not configured. Please enter a valid Gemini API Key.";
         
-        // FIXED: Using v1beta endpoint and the latest alias
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
+        // SWITCHING TO v1 PRODUCTION ENDPOINT FOR BROADEST COMPATIBILITY
+        const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
+        // MERGED PROMPT: Since v1 doesn't support systemInstruction field, we embed the persona in the text
+        const mergedContent = `INSTRUCTIONS FOR MEDICARE EXPERT: ${systemPrompt}\n\nUSER QUESTION: ${prompt}`;
+
         const payload = {
-            contents: [{ parts: [{ text: prompt }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] }
+            contents: [{ parts: [{ text: mergedContent }] }]
         };
 
         try {
@@ -468,7 +470,7 @@
         const resDiv = document.getElementById('advisorResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Thinking...`;
-        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Always recommend stability and consulting with a Shead Group Advisor. Keep tone encouraging.`;
+        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Always recommend stability and consulting with a Shead Group Advisor. Keep tone professional.`;
         const text = await callGemini(document.getElementById('advisorInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
