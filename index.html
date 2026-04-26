@@ -9,7 +9,7 @@
     <!-- Firebase Integration -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         async function initFirebase() {
@@ -21,11 +21,14 @@
                     const db = getFirestore(app);
                     const appId = typeof __app_id !== 'undefined' ? __app_id : 'medicare-navigator-603';
                     
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    const initAuth = async () => {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    };
+                    await initAuth();
                     
                     window.fb = { auth, db, appId, addDoc, collection, onSnapshot, query, serverTimestamp };
                 } catch (error) { console.error("Firebase Error:", error); }
@@ -205,7 +208,7 @@
                     <button onclick="getAdvisorRecommendation()" id="advisorBtn" 
                         class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-xl transition-all">Analyze ✨ Needs</button>
                 </div>
-                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-bold"></div>
+                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-black"></div>
             </div>
         </section>
 
@@ -277,7 +280,7 @@
                     class="relative z-10 w-full p-6 rounded-[2rem] border outline-none focus:ring-4 focus:ring-orange-500/20 shadow-inner bg-white text-lg mb-6 font-medium"></textarea>
                 <button onclick="getScenarioResult()" id="scenarioBtn" 
                     class="bg-orange-500 hover:bg-orange-600 text-white font-black py-6 px-12 rounded-[2rem] shadow-2xl text-xl transition-all active:scale-95">Analyze ✨ Health Event</button>
-                <div id="scenarioResult" class="hidden mt-10 p-10 bg-white rounded-[2rem] border border-orange-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-bold"></div>
+                <div id="scenarioResult" class="hidden mt-10 p-10 bg-white rounded-[2rem] border border-orange-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-black"></div>
             </div>
         </section>
 
@@ -288,10 +291,10 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-4 text-left text-xs font-black text-gray-500 uppercase tracking-widest">Strategic Design</th>
-                            <th class="px-6 py-4 text-left text-xs font-black text-blue-600 uppercase tracking-widest">AARP Plan G</th>
-                            <th class="px-6 py-4 text-left text-xs font-black text-teal-600 uppercase tracking-widest">UA High-Ded G</th>
-                            <th class="px-6 py-4 text-left text-xs font-black text-orange-600 uppercase tracking-widest">AARP Advantage</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Strategic Design</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-blue-600 uppercase tracking-widest">AARP Plan G</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-teal-600 uppercase tracking-widest">UA High-Ded G</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold text-orange-600 uppercase tracking-widest">AARP Advantage</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 text-sm font-bold">
@@ -361,8 +364,8 @@
     const partB = "-xlPGnXgUkg_YZYbM"; // Second half of Gemini Key
     const apiKey = partA + partB;
 
-    // Use standard model name for compatibility
-    const GEN_AI_MODEL = "gemini-1.5-flash";
+    // Use the exact model name required for this execution environment
+    const GEN_AI_MODEL = "gemini-2.5-flash-preview-09-2025";
     const clientPass = "Review2026", agentPass = "Agent2026";
 
     function checkLogin() {
@@ -439,35 +442,42 @@
                 row.innerHTML = `<td class="px-6 py-4 text-sm font-bold text-gray-900 font-black">${d.clientName}</td><td class="px-6 py-4 font-black text-teal-600 font-black">$${(d.totalMonthlyCost || 0).toFixed(2)}</td><td class="px-6 py-4 text-xs text-gray-400 font-black">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td><td class="px-6 py-4 text-blue-600 underline cursor-pointer font-black" onclick='alert("Meds: ${d.drugs ? d.drugs.map(m=>m.name).join(", ") : "None"}\\nPart D Premium: $${(d.partDPremium || 0).toFixed(2)}")'>View Details</td>`;
                 tbody.appendChild(row);
             });
-        });
+        }, (err) => console.error("Firestore Admin Load error:", err));
     }
 
     async function callGemini(prompt, systemPrompt) {
-        if (!apiKey || apiKey.length < 10) return "AI Service not configured. Please enter a valid Gemini API Key.";
+        if (!apiKey || apiKey.length < 5) return "AI Service not configured. Please enter a valid Gemini API Key.";
         
-        // Final fallback: Use Developer endpoint (v1beta) and merge prompt strings
-        // This avoids all field/routing errors across diverse API keys by staying in the lane where Flash is registered.
+        // This environment strictly requires the v1beta endpoint for text generation.
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
-        const legacyPayload = {
-            contents: [{ 
-                parts: [{ text: `INSTRUCTIONS FOR THE SHEAD GROUP EXPERT ADVISOR: ${systemPrompt}\n\nUSER INPUT: ${prompt}` }] 
-            }]
+        // Use the standard systemInstruction payload which is the only authorized 
+        // way to set personas in the preview environment catalog.
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] }
         };
 
-        try {
-            const res = await fetch(url, { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify(legacyPayload) 
-            });
-            const d = await res.json(); 
-            if (d.error) return "AI Error: " + d.error.message;
-            if (d.candidates && d.candidates[0] && d.candidates[0].content) {
-                return d.candidates[0].content.parts[0].text;
+        let delay = 1000;
+        for (let i = 0; i < 5; i++) {
+            try {
+                const res = await fetch(url, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(payload) 
+                });
+                const d = await res.json(); 
+                if (d.error) throw new Error(d.error.message);
+                
+                const text = d.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) return text;
+                return "No response generated. System busy.";
+            } catch (e) {
+                if (i === 4) return "AI Error: " + e.message;
+                await new Promise(r => setTimeout(r, delay));
+                delay *= 2;
             }
-            return "No response generated. Platform limits reached.";
-        } catch (e) { return "Service connection error. Check internet."; }
+        }
     }
 
     async function getAdvisorRecommendation() {
@@ -536,11 +546,9 @@
         // Summary Table Sync
         const sPartDPrem_G = document.getElementById('summaryPartDPremium_G');
         const sPartDPrem_HDG = document.getElementById('summaryPartDPremium_HDG');
-
         const sPartD_G = document.getElementById('summaryPartD_G');
         const sPartD_HDG = document.getElementById('summaryPartD_HDG');
         const sPartD_Adv = document.getElementById('summaryPartD_Adv');
-        
         const sTotal_G = document.getElementById('summaryTotal_G');
         const sTotal_HDG = document.getElementById('summaryTotal_HDG');
         const sTotal_Adv = document.getElementById('summaryTotal_Adv');
