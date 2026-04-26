@@ -157,7 +157,7 @@
         <!-- 3. Drug Tracker -->
         <section id="part-d" class="grid grid-cols-1 lg:grid-cols-2 gap-8 scroll-mt-24">
             <div class="card bg-teal-50 border-teal-200 flex flex-col justify-center text-center p-8">
-                <h3 class="text-2xl font-bold text-teal-900 mb-4 uppercase tracking-widest font-black">Drug Plan Finder</h3>
+                <h3 class="text-2xl font-black text-teal-900 mb-4 uppercase tracking-widest font-black">Drug Plan Finder</h3>
                 <p class="text-teal-800 text-sm mb-8 leading-relaxed font-bold">Login to Medicare.gov to get your plan's monthly "Premium + Copay" total, then record them to the right.</p>
                 <a href="https://www.medicare.gov/plan-compare/" target="_blank" class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-transform hover:scale-[1.02] active:scale-95">Launch Medicare.gov Finder &#8599;</a>
             </div>
@@ -205,7 +205,7 @@
 
         <!-- 5. 15-Year Financials -->
         <section id="financials" class="scroll-mt-24">
-            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center uppercase tracking-widest font-black">15-Year Cumulative Spend Analysis</h2>
+            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest font-black">15-Year Cumulative Spend Analysis</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10 text-center">
                 <div class="bg-white border-l-8 border-red-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-red-900 font-bold text-xs uppercase mb-4 tracking-tighter">AARP Standard Supp G (15-Year Spend Projection)</h4><div id="cumulativeStandard" class="text-5xl font-black text-red-600 mb-4">$0</div><p class="text-xs text-gray-400 italic font-bold">Includes Part B and average 8% annual premium spikes.</p></div>
                 <div class="bg-white border-l-8 border-teal-500 p-10 rounded-3xl shadow-sm border border-gray-100"><h4 class="text-teal-900 font-bold text-xs uppercase mb-4 tracking-tighter">United American HDG (15-Year Projection)</h4><div id="cumulativeHDG" class="text-5xl font-black text-teal-600 mb-4">$0</div><p class="text-xs text-gray-400 italic font-bold">Includes Part B and stable 2% annual premium growth.</p></div>
@@ -220,13 +220,13 @@
         <section id="strategy" class="bg-orange-50 border-2 border-orange-200 rounded-[3rem] p-12 shadow-sm scroll-mt-24">
             <h2 class="text-3xl font-black text-orange-900 mb-10 uppercase tracking-widest text-center">PRO Strategy: Rate Stability Dashboard</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-sm leading-relaxed font-bold">
-                <div><h4 class="font-black text-orange-900 text-xl mb-4 tracking-tight uppercase">Stop Rate Chasing</h4><p class="text-gray-700">Standard Medigap Plan G often sees massive annual increases. United American HDG offers the same medical freedom with a premium floor that stays stable for life.</p></div>
-                <div><h4 class="font-black text-orange-900 text-xl mb-4 tracking-tight uppercase">The Synergy Payout</h4><p class="text-gray-700">Pair UA HDG with an Indemnity plan. You save thousands in premiums each year and use the insurance payout to satisfy the medical deductible.</p></div>
-                <div><h4 class="font-black text-orange-900 text-xl mb-4 tracking-tight uppercase">Guaranteed Access</h4><p class="text-gray-700">Indemnity plans provide a <strong>Guaranteed Issue window (Age 65-70)</strong>, ensuring you can qualify even with complex pre-existing conditions.</p></div>
+                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight uppercase">Stop Rate Chasing</h4><p class="text-gray-700">Standard Medigap Plan G often sees massive annual increases. United American HDG offers the same medical freedom with a premium floor that stays stable for life.</p></div>
+                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight uppercase">The Synergy Payout</h4><p class="text-gray-700">Pair UA HDG with an Indemnity plan. You save thousands in premiums each year and use the insurance payout to satisfy the medical deductible.</p></div>
+                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight uppercase">Guaranteed Access</h4><p class="text-gray-700">Indemnity plans provide a <strong>Guaranteed Issue window (Age 65-70)</strong>, ensuring you can qualify even with complex pre-existing conditions.</p></div>
             </div>
         </section>
 
-        <!-- 7. Bridging logic -->
+        <!-- 7. Detailed Gap Strategy -->
         <section id="gap-detail" class="scroll-mt-24">
             <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center uppercase tracking-widest font-black">How the Synergy Strategy Works</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
@@ -437,14 +437,12 @@
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey) return "AI Key missing. Paste your key in scripts.";
         
-        // STABLE V1 Endpoints with fallback merged-prompt logic
-        const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
+        // FORCING v1beta for model string compatibility and system_instruction support
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
-        // This structure uses the standard content block to ensure compatibility if v1beta is rejected
         const payload = {
-            contents: [{ 
-                parts: [{ text: `CONTEXT: ${systemPrompt}\n\nUSER REQUEST: ${prompt}` }] 
-            }]
+            contents: [{ parts: [{ text: prompt }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] }
         };
 
         try {
@@ -454,7 +452,20 @@
                 body: JSON.stringify(payload) 
             });
             const d = await res.json(); 
-            if (d.error) return "AI Error: " + d.error.message;
+            if (d.error) {
+                // FALLBACK: If v1beta still errors on specific keys, try merging strings
+                if (d.error.message.includes("instruction") || d.error.message.includes("found")) {
+                    const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    const fallbackRes = await fetch(fallbackUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: `INSTRUCTIONS: ${systemPrompt}\n\nUSER INPUT: ${prompt}` }] }] })
+                    });
+                    const fallbackData = await fallbackRes.json();
+                    return fallbackData.candidates?.[0]?.content?.parts?.[0]?.text || "Retry error.";
+                }
+                return "AI Error: " + d.error.message;
+            }
             return d.candidates?.[0]?.content?.parts?.[0]?.text || "No insights generated.";
         } catch (e) { return "Service connection error."; }
     }
@@ -463,7 +474,7 @@
         const resDiv = document.getElementById('advisorResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Thinking...`;
-        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Always recommend stability and consulting with a Shead Group Advisor. Keep tone encouraging.`;
+        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Always recommend stability and consulting with a Shead Group Advisor.`;
         const text = await callGemini(document.getElementById('advisorInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
@@ -472,7 +483,7 @@
         const resDiv = document.getElementById('scenarioResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Simulating...`;
-        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and Advantage ($3,900 MOOP) using 2026 data. Explain how $1k/day hospital indemnity zero-out the UA HDG gap. Professional and detailed. Focus on specific dollar impact.`;
+        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and Advantage ($3,900 MOOP) using 2026 data. Show how $1k/day hospital indemnity zero-out the UA HDG gap. Professional and detailed.`;
         const text = await callGemini(document.getElementById('scenarioInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
@@ -560,7 +571,7 @@
     function exportData() { 
         const data = { drugs: userDrugs, partDPremium: userPartDPremium };
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data)); 
-        const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "Medicare_Planning_Lead_2026.json"); dl.click(); 
+        const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "Medicare_Lead_2026.json"); dl.click(); 
     }
 
     function initCharts() {
