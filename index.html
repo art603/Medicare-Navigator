@@ -141,7 +141,7 @@
 
         <!-- 2. Path Education -->
         <section id="partnership-paths" class="scroll-mt-24">
-            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest">Medicare Partnership Paths</h2>
+            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest font-black">Medicare Partnership Paths</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div class="card border-t-8 border-blue-900 shadow-xl text-center">
                     <h3 class="text-xl font-bold text-gray-800 mb-6 uppercase tracking-widest">Path Strategy Indicators</h3>
@@ -175,7 +175,7 @@
                     <input type="number" id="partDPremiumInput" placeholder="Enter Plan Premium Amount ($)" 
                         class="w-full p-4 border rounded-xl outline-none text-sm bg-white font-black shadow-inner"
                         oninput="updatePartDPremium(this.value)">
-                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected.</p>
+                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected (Medigap paths only).</p>
                 </div>
 
                 <div class="space-y-4">
@@ -361,7 +361,7 @@
     const partB = "-xlPGnXgUkg_YZYbM"; // Second half of Gemini Key
     const apiKey = partA + partB;
 
-    // Use standard model name and production endpoint
+    // Use standard model name for compatibility
     const GEN_AI_MODEL = "gemini-1.5-flash";
     const clientPass = "Review2026", agentPass = "Agent2026";
 
@@ -445,9 +445,9 @@
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey || apiKey.length < 10) return "AI Service not configured. Please enter a valid Gemini API Key.";
         
-        // Final fallback: Use production endpoint (v1) and merge prompt strings
-        // This avoids all field/routing errors across diverse API keys.
-        const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
+        // Final fallback: Use Developer endpoint (v1beta) and merge prompt strings
+        // This avoids all field/routing errors across diverse API keys by staying in the lane where Flash is registered.
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
         const legacyPayload = {
             contents: [{ 
@@ -474,7 +474,7 @@
         const resDiv = document.getElementById('advisorResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Thinking...`;
-        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Always recommend stability and consulting with a Shead Group Advisor.`;
+        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Always recommend stability and consulting with a Shead Group Advisor. Keep tone encouraging.`;
         const text = await callGemini(document.getElementById('advisorInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
