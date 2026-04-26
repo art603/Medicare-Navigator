@@ -135,7 +135,7 @@
 
         <!-- 2. Path Education -->
         <section id="partnership-paths" class="scroll-mt-24">
-            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest">Medicare Partnership Paths</h2>
+            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest font-black">Medicare Partnership Paths</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div class="card border-t-8 border-blue-900 shadow-xl text-center">
                     <h3 class="text-xl font-bold text-gray-800 mb-6 uppercase tracking-widest">Path Strategy Indicators</h3>
@@ -157,7 +157,7 @@
         <!-- 3. Drug Tracker -->
         <section id="part-d" class="grid grid-cols-1 lg:grid-cols-2 gap-8 scroll-mt-24">
             <div class="card bg-teal-50 border-teal-200 flex flex-col justify-center text-center p-8">
-                <h3 class="text-2xl font-black text-teal-900 mb-4 uppercase tracking-widest font-black">Drug Plan Finder</h3>
+                <h3 class="text-2xl font-bold text-teal-900 mb-4 uppercase tracking-widest font-black">Drug Plan Finder</h3>
                 <p class="text-teal-800 text-sm mb-8 leading-relaxed font-bold">Login to Medicare.gov to get your plan's monthly "Premium + Copay" total, then record them to the right.</p>
                 <a href="https://www.medicare.gov/plan-compare/" target="_blank" class="bg-teal-700 hover:bg-teal-800 text-white font-bold py-5 rounded-2xl shadow-xl transition-transform hover:scale-[1.02] active:scale-95">Launch Medicare.gov Finder &#8599;</a>
             </div>
@@ -169,7 +169,7 @@
                     <input type="number" id="partDPremiumInput" placeholder="Enter Plan Premium Amount ($)" 
                         class="relative z-10 w-full p-4 border rounded-xl outline-none text-sm bg-white font-black shadow-inner"
                         oninput="updatePartDPremium(this.value)">
-                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected (Medigap paths only).</p>
+                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected.</p>
                 </div>
 
                 <div class="space-y-4">
@@ -355,7 +355,8 @@
     const partB = "-xlPGnXgUkg_YZYbM"; // Second half of Gemini Key
     const apiKey = partA + partB;
 
-    const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-1.5-flash";
+    // Use the alias to point to the latest stable flash model
+    const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-1.5-flash-latest";
 
     function checkLogin() {
         const input = document.getElementById('passInput').value.trim();
@@ -437,13 +438,12 @@
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey || apiKey.length < 10) return "AI Service not configured. Please enter a valid Gemini API Key.";
         
-        // Merged structure to avoid systemInstruction errors and model mismatches across versions
-        const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
+        // FIXED: Using v1beta endpoint and the latest alias
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
         const payload = {
-            contents: [{ 
-                parts: [{ text: `INSTRUCTIONS: ${systemPrompt}\n\nUSER QUERY: ${prompt}` }] 
-            }]
+            contents: [{ parts: [{ text: prompt }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] }
         };
 
         try {
@@ -453,11 +453,14 @@
                 body: JSON.stringify(payload) 
             });
             const d = await res.json(); 
-            if (d.error) return "AI Error: " + d.error.message;
+            if (d.error) {
+                console.error("Gemini Error:", d.error);
+                return "AI Error: " + d.error.message;
+            }
             if (d.candidates && d.candidates[0] && d.candidates[0].content) {
                 return d.candidates[0].content.parts[0].text;
             }
-            return "No response generated. Please check your API usage limits.";
+            return "No response generated. Please check your API key status.";
         } catch (e) { return "Service connection error. Ensure your site is connected to the internet."; }
     }
 
@@ -465,7 +468,7 @@
         const resDiv = document.getElementById('advisorResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Thinking...`;
-        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Always recommend stability and consulting with a Shead Group Advisor.`;
+        const sys = `Expert Advisor for The Shead Group. 2026 Costs (Part B $202.90). UA HDG + Indemnity focus vs AARP Plan G. User meds: ${userDrugs.map(d=>d.name).join(', ')}. Part D Prem: $${userPartDPremium}. Always recommend stability and consulting with a Shead Group Advisor. Keep tone encouraging.`;
         const text = await callGemini(document.getElementById('advisorInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
@@ -474,7 +477,7 @@
         const resDiv = document.getElementById('scenarioResult'); 
         resDiv.classList.remove('hidden'); 
         resDiv.innerHTML = `<span class="loading-spinner"></span> Simulating...`;
-        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and Advantage ($3,900 MOOP) using 2026 data. Show how $1k/day hospital indemnity zero-out the UA HDG gap. Professional and detailed.`;
+        const sys = `Medicare Analyst. Compare AARP G, UA HDG ($2,950 Ded), and Advantage ($3,900 MOOP) using 2026 data. Explain how $1k/day hospital indemnity zero-out the UA HDG gap. Professional and detailed.`;
         const text = await callGemini(document.getElementById('scenarioInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
@@ -537,24 +540,13 @@
         const sTotal_Adv = document.getElementById('summaryTotal_Adv');
 
         if (sPartD_G) {
-            // Plan Premiums
             sPartDPrem_G.innerText = `$${userPartDPremium.toFixed(2)}`;
             sPartDPrem_HDG.innerText = `$${userPartDPremium.toFixed(2)}`;
-
-            // Copays
             sPartD_G.innerText = `$${sum.toFixed(2)}`;
             sPartD_HDG.innerText = `$${sum.toFixed(2)}`;
             sPartD_Adv.innerText = `$${sum.toFixed(2)}`;
-
-            // Totals
-            // AARP G Column: B ($202.90) + Supp ($155) + D Prem (User Input) + Copays (Sum)
             sTotal_G.innerText = `$${(357.90 + sum + userPartDPremium).toFixed(2)}+`;
-            
-            // UA HDG Column: B ($202.90) + Supp ($50) + D Prem (User Input) + Copays (Sum)
             sTotal_HDG.innerText = `$${(252.90 + sum + userPartDPremium).toFixed(2)}+`;
-            
-            // Advantage Column (MAPD): B ($202.90) + Adv ($0) + Copays (Sum)
-            // Note: Standalone Part D Premium is NOT added here because it's built into the MAPD.
             sTotal_Adv.innerText = `$${(202.90 + sum).toFixed(2)}`;
         }
     }
