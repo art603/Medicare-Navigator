@@ -135,7 +135,7 @@
 
         <!-- 2. Path Education -->
         <section id="partnership-paths" class="scroll-mt-24">
-            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest font-black">Medicare Partnership Paths</h2>
+            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest">Medicare Partnership Paths</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div class="card border-t-8 border-blue-900 shadow-xl text-center">
                     <h3 class="text-xl font-bold text-gray-800 mb-6 uppercase tracking-widest">Path Strategy Indicators</h3>
@@ -167,7 +167,7 @@
                 <div class="mb-6 p-4 bg-teal-50 rounded-xl border-2 border-teal-200">
                     <label class="block text-xs font-black text-teal-900 uppercase mb-2 tracking-widest">Monthly Part D Plan Premium</label>
                     <input type="number" id="partDPremiumInput" placeholder="Enter Plan Premium Amount ($)" 
-                        class="w-full p-4 border rounded-xl outline-none text-sm bg-white font-black shadow-inner"
+                        class="relative z-10 w-full p-4 border rounded-xl outline-none text-sm bg-white font-black shadow-inner"
                         oninput="updatePartDPremium(this.value)">
                     <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected.</p>
                 </div>
@@ -175,8 +175,8 @@
                 <div class="space-y-4">
                     <label class="block text-xs font-black text-gray-500 uppercase tracking-widest">Add Individual Medications (Copays)</label>
                     <div class="flex gap-2 no-print">
-                        <input type="text" id="drugName" placeholder="Drug Name" class="flex-1 p-4 border rounded-xl outline-none text-sm bg-gray-50 font-bold">
-                        <input type="number" id="drugCost" placeholder="$" class="w-24 p-4 border rounded-xl outline-none text-sm bg-gray-50 text-center font-black">
+                        <input type="text" id="drugName" placeholder="Drug Name" class="relative z-10 flex-1 p-4 border rounded-xl outline-none text-sm bg-gray-50 font-bold">
+                        <input type="number" id="drugCost" placeholder="$" class="relative z-10 w-24 p-4 border rounded-xl outline-none text-sm bg-gray-50 text-center font-black">
                         <button onclick="addDrug()" class="bg-teal-600 text-white px-6 rounded-xl font-black hover:bg-teal-700 transition-all shadow-sm">+</button>
                     </div>
                     <div id="drugListItems" class="space-y-2 mb-4"></div>
@@ -199,7 +199,7 @@
                     <button onclick="getAdvisorRecommendation()" id="advisorBtn" 
                         class="bg-blue-900 hover:bg-black text-white font-bold py-4 px-10 rounded-2xl shadow-xl transition-all">Analyze ✨ Needs</button>
                 </div>
-                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-medium"></div>
+                <div id="advisorResult" class="hidden mt-8 p-8 bg-white rounded-2xl border border-blue-100 shadow-2xl text-gray-800 text-sm leading-relaxed font-bold"></div>
             </div>
         </section>
 
@@ -220,13 +220,13 @@
         <section id="strategy" class="bg-orange-50 border-2 border-orange-200 rounded-[3rem] p-12 shadow-sm scroll-mt-24">
             <h2 class="text-3xl font-black text-orange-900 mb-10 uppercase tracking-widest text-center">PRO Strategy: Rate Stability Dashboard</h2>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-12 text-sm leading-relaxed font-bold">
-                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight uppercase">Stop Rate Chasing</h4><p class="text-gray-700">Standard Medigap Plan G often sees massive annual increases. United American HDG offers the same medical freedom with a premium floor that stays stable for life.</p></div>
-                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight uppercase">The Synergy Payout</h4><p class="text-gray-700">Pair UA HDG with an Indemnity plan. You save thousands in premiums each year and use the insurance payout to satisfy the medical deductible.</p></div>
-                <div><h4 class="font-bold text-orange-900 text-xl mb-4 tracking-tight uppercase">Guaranteed Access</h4><p class="text-gray-700">Indemnity plans provide a <strong>Guaranteed Issue window (Age 65-70)</strong>, ensuring you can qualify even with complex pre-existing conditions.</p></div>
+                <div><h4 class="font-black text-orange-900 text-xl mb-4 tracking-tight uppercase">Stop Rate Chasing</h4><p class="text-gray-700">Standard Medigap Plan G often sees massive annual increases. United American HDG offers the same medical freedom with a premium floor that stays stable for life.</p></div>
+                <div><h4 class="font-black text-orange-900 text-xl mb-4 tracking-tight uppercase">The Synergy Payout</h4><p class="text-gray-700">Pair UA HDG with an Indemnity plan. You save thousands in premiums each year and use the insurance payout to satisfy the medical deductible.</p></div>
+                <div><h4 class="font-black text-orange-900 text-xl mb-4 tracking-tight uppercase">Guaranteed Access</h4><p class="text-gray-700">Indemnity plans provide a <strong>Guaranteed Issue window (Age 65-70)</strong>, ensuring you can qualify even with complex pre-existing conditions.</p></div>
             </div>
         </section>
 
-        <!-- 7. Detailed Gap Strategy -->
+        <!-- 7. Bridging logic -->
         <section id="gap-detail" class="scroll-mt-24">
             <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center uppercase tracking-widest font-black">How the Synergy Strategy Works</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
@@ -428,21 +428,22 @@
             snap.docs.forEach(doc => {
                 const d = doc.data();
                 const row = document.createElement('tr');
-                row.innerHTML = `<td class="px-6 py-4 text-sm font-bold text-gray-900 font-black">${d.clientName}</td><td class="px-6 py-4 font-black text-teal-600 font-black">$${(d.totalMonthlyCost || 0).toFixed(2)}</td><td class="px-6 py-4 text-xs text-gray-400 font-black">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td><td class="px-6 py-4 text-blue-600 underline cursor-pointer font-black" onclick='alert("Meds: ${d.drugs ? d.drugs.map(m=>m.name).join(", ") : "None"}\\nPart D Premium: $${(d.partDPremium || 0).toFixed(2)}")'>View Details</td>`;
+                row.innerHTML = `<td class="px-6 py-4 text-sm font-bold text-gray-900 font-black">${d.clientName}</td><td class="px-6 py-4 font-black text-teal-600 font-bold">$${(d.totalMonthlyCost || 0).toFixed(2)}</td><td class="px-6 py-4 text-xs text-gray-400 font-black">${d.timestamp?.toDate().toLocaleDateString() || 'Recent'}</td><td class="px-6 py-4 text-blue-600 underline cursor-pointer font-black" onclick='alert("Meds: ${d.drugs ? d.drugs.map(m=>m.name).join(", ") : "None"}\\nPart D Premium: $${(d.partDPremium || 0).toFixed(2)}")'>View Details</td>`;
                 tbody.appendChild(row);
             });
         });
     }
 
     async function callGemini(prompt, systemPrompt) {
-        if (!apiKey) return "AI Key missing. Paste your key in scripts.";
+        if (!apiKey || apiKey.length < 10) return "AI Service not configured. Please enter a valid Gemini API Key.";
         
-        // FORCING v1beta for model string compatibility and system_instruction support
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
+        // Merged structure to avoid systemInstruction errors and model mismatches
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         
         const payload = {
-            contents: [{ parts: [{ text: prompt }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] }
+            contents: [{ 
+                parts: [{ text: `INSTRUCTIONS: ${systemPrompt}\n\nUSER QUERY: ${prompt}` }] 
+            }]
         };
 
         try {
@@ -452,22 +453,12 @@
                 body: JSON.stringify(payload) 
             });
             const d = await res.json(); 
-            if (d.error) {
-                // FALLBACK: If v1beta still errors on specific keys, try merging strings
-                if (d.error.message.includes("instruction") || d.error.message.includes("found")) {
-                    const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                    const fallbackRes = await fetch(fallbackUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ contents: [{ parts: [{ text: `INSTRUCTIONS: ${systemPrompt}\n\nUSER INPUT: ${prompt}` }] }] })
-                    });
-                    const fallbackData = await fallbackRes.json();
-                    return fallbackData.candidates?.[0]?.content?.parts?.[0]?.text || "Retry error.";
-                }
-                return "AI Error: " + d.error.message;
+            if (d.error) return "AI Error: " + d.error.message;
+            if (d.candidates && d.candidates[0] && d.candidates[0].content) {
+                return d.candidates[0].content.parts[0].text;
             }
-            return d.candidates?.[0]?.content?.parts?.[0]?.text || "No insights generated.";
-        } catch (e) { return "Service connection error."; }
+            return "No response generated. Please check your API usage limits.";
+        } catch (e) { return "Service connection error. Ensure your site is connected to the internet."; }
     }
 
     async function getAdvisorRecommendation() {
@@ -546,24 +537,13 @@
         const sTotal_Adv = document.getElementById('summaryTotal_Adv');
 
         if (sPartD_G) {
-            // Plan Premiums
             sPartDPrem_G.innerText = `$${userPartDPremium.toFixed(2)}`;
             sPartDPrem_HDG.innerText = `$${userPartDPremium.toFixed(2)}`;
-
-            // Copays
             sPartD_G.innerText = `$${sum.toFixed(2)}`;
             sPartD_HDG.innerText = `$${sum.toFixed(2)}`;
             sPartD_Adv.innerText = `$${sum.toFixed(2)}`;
-
-            // Totals
-            // AARP G Column: B ($202.90) + Supp ($155) + D Prem (User Input) + Copays (Sum)
             sTotal_G.innerText = `$${(357.90 + sum + userPartDPremium).toFixed(2)}+`;
-            
-            // UA HDG Column: B ($202.90) + Supp ($50) + D Prem (User Input) + Copays (Sum)
             sTotal_HDG.innerText = `$${(252.90 + sum + userPartDPremium).toFixed(2)}+`;
-            
-            // Advantage Column (MAPD): B ($202.90) + Adv ($0) + Copays (Sum)
-            // Note: Standalone Part D Premium is NOT added here because it's built into the MAPD.
             sTotal_Adv.innerText = `$${(202.90 + sum).toFixed(2)}`;
         }
     }
