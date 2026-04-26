@@ -135,7 +135,7 @@
 
         <!-- 2. Path Education -->
         <section id="partnership-paths" class="scroll-mt-24">
-            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest">Medicare Partnership Paths</h2>
+            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest font-black">Medicare Partnership Paths</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div class="card border-t-8 border-blue-900 shadow-xl text-center">
                     <h3 class="text-xl font-bold text-gray-800 mb-6 uppercase tracking-widest">Path Strategy Indicators</h3>
@@ -169,7 +169,7 @@
                     <input type="number" id="partDPremiumInput" placeholder="Enter Plan Premium Amount ($)" 
                         class="relative z-10 w-full p-4 border rounded-xl outline-none text-sm bg-white font-black shadow-inner"
                         oninput="updatePartDPremium(this.value)">
-                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected.</p>
+                    <p class="text-[10px] text-teal-600 mt-2 italic font-black uppercase tracking-tighter">Record the monthly base premium cost of the standalone drug plan you selected (Medigap paths only).</p>
                 </div>
 
                 <div class="space-y-4">
@@ -226,9 +226,9 @@
             </div>
         </section>
 
-        <!-- 7. Detailed Gap Strategy -->
+        <!-- 7. Bridging logic -->
         <section id="gap-detail" class="scroll-mt-24">
-            <h2 class="text-3xl font-black text-gray-900 mb-10 text-center uppercase tracking-widest font-black">How the Synergy Strategy Works</h2>
+            <h2 class="text-3xl font-bold text-gray-900 mb-10 text-center uppercase tracking-widest font-black">How the Synergy Strategy Works</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
                 <div class="card border-l-8 border-teal-500 p-8 shadow-lg">
                     <h3 class="text-2xl font-black text-teal-900 mb-4 uppercase">1. Responsibility (UA HDG)</h3>
@@ -355,7 +355,7 @@
     const partB = "-xlPGnXgUkg_YZYbM"; // Second half of Gemini Key
     const apiKey = partA + partB;
 
-    // Fixed model string for standard beta environment
+    // Use the base model name for broad compatibility across version endpoints
     const clientPass = "Review2026", agentPass = "Agent2026", GEN_AI_MODEL = "gemini-1.5-flash";
 
     function checkLogin() {
@@ -438,13 +438,14 @@
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey || apiKey.length < 10) return "AI Service not configured. Please enter a valid Gemini API Key.";
         
-        // FORCED v1beta architecture to match gemini-1.5-flash standard
+        // FORCING v1beta for widest availability of gemini-1.5-flash
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
-        // COMPATIBILITY PAYLOAD: We merge instructions to avoid "systemInstruction not found" errors
+        // COMPATIBILITY PAYLOAD: Merging persona instructions into the main content block
+        // to bypass errors related to the separate systemInstruction field.
         const payload = {
             contents: [{ 
-                parts: [{ text: `ROLE: ${systemPrompt}\n\nUSER QUESTION: ${prompt}` }] 
+                parts: [{ text: `INSTRUCTIONS FOR MEDICARE EXPERT: ${systemPrompt}\n\nUSER QUESTION: ${prompt}` }] 
             }]
         };
 
@@ -542,13 +543,24 @@
         const sTotal_Adv = document.getElementById('summaryTotal_Adv');
 
         if (sPartD_G) {
+            // Plan Premiums
             sPartDPrem_G.innerText = `$${userPartDPremium.toFixed(2)}`;
             sPartDPrem_HDG.innerText = `$${userPartDPremium.toFixed(2)}`;
+
+            // Copays
             sPartD_G.innerText = `$${sum.toFixed(2)}`;
             sPartD_HDG.innerText = `$${sum.toFixed(2)}`;
             sPartD_Adv.innerText = `$${sum.toFixed(2)}`;
+
+            // Totals
+            // AARP G Column: B ($202.90) + Supp ($155) + D Prem (User Input) + Copays (Sum)
             sTotal_G.innerText = `$${(357.90 + sum + userPartDPremium).toFixed(2)}+`;
+            
+            // UA HDG Column: B ($202.90) + Supp ($50) + D Prem (User Input) + Copays (Sum)
             sTotal_HDG.innerText = `$${(252.90 + sum + userPartDPremium).toFixed(2)}+`;
+            
+            // Advantage Column (MAPD): B ($202.90) + Adv ($0) + Copays (Sum)
+            // Standalone Part D premium is NOT added to AARP Advantage MAPD total.
             sTotal_Adv.innerText = `$${(202.90 + sum).toFixed(2)}`;
         }
     }
