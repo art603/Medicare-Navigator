@@ -78,7 +78,7 @@
 
     <header class="bg-blue-900 text-white py-12">
         <div class="max-w-7xl mx-auto px-4 text-center">
-            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 uppercase font-black">2026 Strategic Review</h1>
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 uppercase font-black text-white">2026 Strategic Review</h1>
             <div class="relative max-w-md mx-auto">
                 <input type="text" id="clientName" placeholder="Enter Client Name" 
                     class="relative z-20 w-full bg-white text-blue-900 text-center text-xl p-3 rounded-xl border-2 border-blue-400 shadow-inner outline-none focus:ring-4 focus:ring-blue-300 transition-all font-bold">
@@ -250,10 +250,7 @@
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey || apiKey.length < 5) return "AI Service not configured. Please enter your split key.";
         
-        // Using v1beta endpoint - broadest model registration lane
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
-        
-        // MERGED PROMPT ARCHITECTURE: Combines instructions with query to prevent technical field rejection.
         const mergedContent = `INSTRUCTIONS FOR SHEAD GROUP MEDICARE EXPERT: ${systemPrompt}\n\nUSER REQUEST: ${prompt}`;
 
         const payload = {
@@ -293,11 +290,23 @@
 
     // --- DASHBOARD LOGIC ---
     function checkLogin() {
-        const input = document.getElementById('passInput').value.trim(); // TRIM added to fix space errors
+        const input = document.getElementById('passInput').value.trim();
+        const gate = document.getElementById('loginGate');
+        const dashboard = document.getElementById('dashboardContent');
+
         if (input === "Review2026" || input === "Agent2026") {
-            document.getElementById('loginGate').classList.add('hidden');
-            document.getElementById('dashboardContent').classList.remove('hidden');
-            initCharts(); renderDrugList();
+            // Explicitly set style and opacity to clear overlay
+            gate.style.opacity = '0';
+            setTimeout(() => {
+                gate.style.display = 'none';
+                dashboard.classList.remove('hidden');
+                // Tiny delay to ensure DOM is ready for Chart.js canvases to have height
+                setTimeout(() => {
+                    initCharts(); 
+                    renderDrugList();
+                    window.scrollTo(0,0);
+                }, 50);
+            }, 400);
         } else { 
             document.getElementById('loginError').classList.remove('hidden'); 
         }
@@ -326,7 +335,8 @@
     function removeDrug(id) { userDrugs = userDrugs.filter(d => d.id !== id); localStorage.setItem('medicareDrugs', JSON.stringify(userDrugs)); renderDrugList(); }
 
     function renderDrugList() {
-        const container = document.getElementById('drugListItems'); container.innerHTML = '';
+        const container = document.getElementById('drugListItems'); if(!container) return;
+        container.innerHTML = '';
         let sum = 0;
         userDrugs.forEach(d => {
             sum += d.cost;
@@ -336,16 +346,19 @@
         });
         document.getElementById('totalMonthlyDrugCost').innerText = `$${sum.toFixed(2)}`;
         
-        // Summary Table Sync (AARP Advantage Column ignores Part D Premium Input)
-        document.getElementById('sPartDPrem_G').innerText = `$${userPartDPremium.toFixed(2)}`;
-        document.getElementById('sPartDPrem_HDG').innerText = `$${userPartDPremium.toFixed(2)}`;
-        document.getElementById('sPartD_G').innerText = `$${sum.toFixed(2)}`;
-        document.getElementById('sPartD_HDG').innerText = `$${sum.toFixed(2)}`;
-        document.getElementById('sPartD_Adv').innerText = `$${sum.toFixed(2)}`;
-        
-        document.getElementById('sTotal_G').innerText = `$${(357.90 + sum + userPartDPremium).toFixed(2)}+`;
-        document.getElementById('sTotal_HDG').innerText = `$${(252.90 + sum + userPartDPremium).toFixed(2)}+`;
-        document.getElementById('sTotal_Adv').innerText = `$${(202.90 + sum).toFixed(2)}`;
+        // Summary Table Sync
+        const sPartDPrem_G = document.getElementById('sPartDPrem_G');
+        if (sPartDPrem_G) {
+            sPartDPrem_G.innerText = `$${userPartDPremium.toFixed(2)}`;
+            document.getElementById('sPartDPrem_HDG').innerText = `$${userPartDPremium.toFixed(2)}`;
+            document.getElementById('sPartD_G').innerText = `$${sum.toFixed(2)}`;
+            document.getElementById('sPartD_HDG').innerText = `$${sum.toFixed(2)}`;
+            document.getElementById('sPartD_Adv').innerText = `$${sum.toFixed(2)}`;
+            
+            document.getElementById('sTotal_G').innerText = `$${(357.90 + sum + userPartDPremium).toFixed(2)}+`;
+            document.getElementById('sTotal_HDG').innerText = `$${(252.90 + sum + userPartDPremium).toFixed(2)}+`;
+            document.getElementById('sTotal_Adv').innerText = `$${(202.90 + sum).toFixed(2)}`;
+        }
     }
 
     function initCharts() {
