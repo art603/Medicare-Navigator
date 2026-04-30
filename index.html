@@ -11,34 +11,41 @@
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'medicare-navigator-603';
+        // Global check for Firebase config
+        const firebaseConfigRaw = typeof __firebase_config !== 'undefined' ? __firebase_config : null;
+        
+        if (firebaseConfigRaw) {
+            const firebaseConfig = JSON.parse(firebaseConfigRaw);
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'medicare-navigator-603';
 
-        async function initAuth() {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
+            async function initAuth() {
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                    window.fb = { auth, db, appId, addDoc, collection, onSnapshot, query, serverTimestamp };
+                } catch (error) { 
+                    console.error("Firebase Auth Error:", error); 
                 }
-                window.fb = { auth, db, appId, addDoc, collection, onSnapshot, query, serverTimestamp };
-            } catch (error) { 
-                console.error("Firebase Auth Error:", error); 
             }
+            initAuth();
+        } else {
+            window.fb = { disabled: true };
         }
-        initAuth();
     </script>
     <style>
-        body { background-color: #F8FAFC; font-family: 'Segoe UI', Roboto, sans-serif; color: #1E293B; transition: background 0.3s ease; }
+        body { background-color: #F8FAFC; font-family: 'Segoe UI', Roboto, sans-serif; color: #1E293B; }
         #loginGate { 
             position: fixed; inset: 0; background: #1E3A8A; z-index: 10000; 
             display: flex; align-items: center; justify-content: center; 
-            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); opacity: 1; visibility: visible;
+            transition: all 0.5s ease; opacity: 1; visibility: visible;
         }
-        #loginGate.unlocked { opacity: 0; visibility: hidden; pointer-events: none; transform: scale(1.1); }
+        #loginGate.unlocked { opacity: 0; visibility: hidden; pointer-events: none; }
         .chart-container { position: relative; width: 100%; max-width: 650px; margin: 0 auto; height: 320px; }
         .projection-container { position: relative; width: 100%; max-width: 850px; margin: 0 auto; height: 400px; }
         .card { background-color: #ffffff; border-radius: 1.5rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); padding: 2rem; border: 1px solid #E2E8F0; }
@@ -58,7 +65,7 @@
         <input type="password" id="passInput" placeholder="Access Code" 
                onkeydown="if(event.key === 'Enter') checkLogin()"
                class="w-full p-5 border-2 border-gray-100 rounded-2xl mb-4 text-center text-xl outline-none focus:ring-4 focus:ring-blue-100 focus:border-blue-600 transition-all font-bold placeholder-gray-300">
-        <button onclick="checkLogin()" class="w-full bg-blue-900 hover:bg-black text-white font-black py-5 rounded-2xl shadow-xl transition-all transform active:scale-95 uppercase tracking-widest">Unlock Dashboard</button>
+        <button onclick="checkLogin()" class="w-full bg-blue-900 hover:bg-black text-white font-bold py-5 rounded-2xl shadow-xl transition-all transform active:scale-95 uppercase tracking-widest">Unlock Dashboard</button>
         <p id="loginError" class="text-red-500 text-xs mt-6 hidden font-bold uppercase tracking-widest">Invalid code. Please contact your advisor.</p>
     </div>
 </div>
@@ -106,9 +113,9 @@
                             <span class="text-3xl font-black text-red-600">$1,736</span>
                         </div>
                         <div class="grid grid-cols-1 gap-3 text-xs text-gray-500 uppercase font-black tracking-widest">
-                            <div class="flex justify-between border-b border-gray-100 pb-2"><span>Days 1-60</span><span class="text-gray-900">$0 copay</span></div>
-                            <div class="flex justify-between border-b border-gray-100 pb-2"><span>Days 61-90</span><span class="text-gray-900">$434 / day</span></div>
-                            <div class="flex justify-between border-b border-gray-100 pb-2"><span>Skilled Nursing (Days 21-100)</span><span class="text-gray-900">$217 / day</span></div>
+                            <div class="flex justify-between border-b border-gray-100 pb-2"><span>Days 1-60</span><span class="text-gray-900 font-black">$0 copay</span></div>
+                            <div class="flex justify-between border-b border-gray-100 pb-2"><span>Days 61-90</span><span class="text-gray-900 font-black">$434 / day</span></div>
+                            <div class="flex justify-between border-b border-gray-100 pb-2"><span>Skilled Nursing (Days 21-100)</span><span class="text-gray-900 font-black">$217 / day</span></div>
                         </div>
                     </div>
                 </div>
@@ -166,7 +173,7 @@
                 <div class="flex items-center gap-4 mb-8"><span class="text-5xl">✨</span><h2 class="text-3xl font-black text-blue-900 uppercase tracking-tight">TSG Strategy Navigator</h2></div>
                 <p class="text-lg text-gray-600 mb-8 italic leading-relaxed font-bold">Describe your lifestyle, health history, and medications for a customized 2026 design recommendation.</p>
                 <div class="flex flex-col lg:flex-row gap-6">
-                    <textarea id="advisorInput" rows="3" placeholder="e.g. I travel often, take Eliquis, and want the lowest premium possible with any doctor access..." 
+                    <textarea id="advisorInput" rows="3" placeholder="e.g. I travel often and want the lowest premium possible with any doctor access..." 
                         class="w-full lg:flex-1 p-6 rounded-[2rem] border-2 border-blue-50 outline-none focus:ring-4 focus:ring-blue-100 bg-white shadow-inner font-bold text-lg"></textarea>
                     <button onclick="getAdvisorRecommendation()" id="advisorBtn" 
                         class="bg-blue-900 hover:bg-black text-white font-black py-8 px-12 rounded-[2rem] shadow-2xl transition-all uppercase tracking-widest text-xl h-full">Analyze ✨ Needs</button>
@@ -214,8 +221,8 @@
                         <tr><td class="px-8 py-6 bg-gray-50/30 uppercase text-[10px] tracking-widest font-black">Monthly Supp/Adv Cost</td><td class="px-8 py-6 text-blue-900">$155.00+</td><td class="px-8 py-6 text-teal-700">$50.00+</td><td class="px-8 py-6 text-orange-900">$0.00</td></tr>
                         <tr><td class="px-8 py-6 bg-gray-50/30 uppercase text-[10px] tracking-widest font-black">Monthly Part D Premium</td><td class="px-8 py-6 text-blue-600" id="sPartDPrem_G">$0.00</td><td class="px-8 py-6 text-blue-600" id="sPartDPrem_HDG">$0.00</td><td class="px-8 py-6 text-green-600 uppercase text-[10px] font-black font-black">MAPD (Included)</td></tr>
                         <tr><td class="px-8 py-6 bg-gray-50/30 uppercase text-[10px] tracking-widest font-black">Monthly Scripts (Copays)</td><td class="px-8 py-6 text-teal-600" id="sPartD_G">$0.00</td><td class="px-8 py-6 text-teal-600" id="sPartD_HDG">$0.00</td><td class="px-8 py-6 text-teal-600" id="sPartD_Adv">$0.00</td></tr>
-                        <tr class="bg-blue-50/30 border-y-4 border-blue-100"><td class="px-8 py-6 font-black uppercase text-[10px] tracking-widest font-black">Total Monthly Floor</td><td class="px-8 py-6 font-black text-blue-900 text-xl" id="sTotal_G">$0.00</td><td class="px-8 py-6 font-black text-teal-700 text-xl" id="sTotal_HDG">$0.00</td><td class="px-8 py-6 font-black text-orange-900 text-xl" id="sTotal_Adv">$0.00</td></tr>
-                        <tr><td class="px-8 py-6 bg-gray-50/30 uppercase text-[10px] tracking-widest font-black">Annual Med Risk (MOOP)</td><td class="px-8 py-6 font-black">$283</td><td class="px-8 py-6 font-black">$2,950</td><td class="px-8 py-6 font-black">$3,900</td></tr>
+                        <tr class="bg-blue-50/30 border-y-4 border-blue-100 font-black"><td class="px-8 py-6 font-black uppercase text-[10px] tracking-widest font-black">Total Monthly Floor</td><td class="px-8 py-6 font-black text-blue-900 text-xl" id="sTotal_G">$0.00</td><td class="px-8 py-6 font-black text-teal-700 text-xl" id="sTotal_HDG">$0.00</td><td class="px-8 py-6 font-black text-orange-900 text-xl" id="sTotal_Adv">$0.00</td></tr>
+                        <tr><td class="px-8 py-6 bg-gray-50/30 uppercase text-[10px] tracking-widest font-black">Annual Med Risk (MOOP)</td><td class="px-8 py-6 font-black font-black">$283</td><td class="px-8 py-6 font-black font-black">$2,950</td><td class="px-8 py-6 font-black font-black">$3,900</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -224,7 +231,7 @@
         <!-- Disclosures -->
         <section id="disclosures" class="bg-gray-100 p-10 rounded-[2rem] border border-gray-200 text-[11px] leading-relaxed text-gray-500 font-bold uppercase tracking-tight">
             <p class="font-black text-gray-700 mb-3 uppercase tracking-widest font-black">Important Disclosure</p>
-            <p class="mb-4">Dashboard figures are conceptual and intended for strategic education. Carrier references to AARP and UA modeled based on 2026 filings. Medicare Part B premiums and Part A deductibles are based on official 2026 CMS projections. Always consult with a licensed Shead Group Advisor before making a final enrollment decision.</p>
+            <p class="mb-4">Dashboard figures are conceptual and intended for strategic education. Carrier references to AARP and UA modeled based on 2026 filings. Medicare Part B premiums and Part A deductibles are based on official 2026 CMS projections.</p>
         </section>
     </main>
 
@@ -239,17 +246,19 @@
     const pB = "-xlPGnXgUkg_YZYbM";
     const apiKey = pA + pB;
 
-    // Use the model identifier specifically authorized for this preview environment.
-    const GEN_AI_MODEL = "gemini-2.5-flash-preview-09-2025";
+    // OPTIMIZED FOR PUBLIC DEPLOYMENT: gemini-1.5-flash on the v1 endpoint.
+    const GEN_AI_MODEL = "gemini-1.5-flash";
 
     async function callGemini(prompt, systemPrompt) {
         if (!apiKey || apiKey.length < 5) return "AI Service not configured. Please paste your split key.";
         
-        // v1beta endpoint with preview model string
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
+        // Use v1 Production Endpoint for broad public compatibility
+        const url = `https://generativelanguage.googleapis.com/v1/models/${GEN_AI_MODEL}:generateContent?key=${apiKey}`;
         
+        // Merged prompt architecture ensures persona works on v1 endpoint without JSON rejection.
+        const mergedContent = `INSTRUCTIONS FOR SHEAD GROUP MEDICARE ADVISOR: ${systemPrompt}\n\nUSER REQUEST: ${prompt}`;
         const payload = {
-            contents: [{ parts: [{ text: `ROLE: ${systemPrompt}\n\nUSER REQUEST: ${prompt}` }] }]
+            contents: [{ parts: [{ text: mergedContent }] }]
         };
 
         let delay = 1000;
@@ -272,7 +281,7 @@
 
     async function getAdvisorRecommendation() {
         const resDiv = document.getElementById('advisorResult'); resDiv.classList.remove('hidden'); resDiv.innerHTML = `<span class="loading-spinner"></span> Thinking...`;
-        const sys = `Expert Advisor for The Shead Group. 2026 Medicare Costs. UA HDG + Indemnity ($1k/day hospital) synergy to cover $2,950 gap. Compare to AARP Plan G. Professional tone.`;
+        const sys = `Expert Advisor for The Shead Group. 2026 Medicare Costs. Emphasis on UA HDG + Indemnity ($1k/day hospital) synergy to cover $2,950 gap. Compare to AARP Plan G. Professional tone.`;
         const text = await callGemini(document.getElementById('advisorInput').value, sys);
         resDiv.innerHTML = text.replace(/\n/g, '<br>');
     }
@@ -284,12 +293,10 @@
         const dashboard = document.getElementById('dashboardContent');
 
         if (input === "Review2026" || input === "Agent2026") {
-            // Unlocking sequence
             gate.classList.add('unlocked');
             setTimeout(() => {
                 gate.style.display = 'none';
                 dashboard.classList.remove('hidden');
-                // Force layout paint before revealing opacity
                 void dashboard.offsetWidth; 
                 dashboard.classList.add('opacity-100');
                 
